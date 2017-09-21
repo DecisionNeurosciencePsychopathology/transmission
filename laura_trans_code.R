@@ -93,6 +93,11 @@ d$rel[d$relation == "num1stExposuresSC" | d$relation == "num1stExposuresSA"] <- 
 d$rel[d$relation=="num2ndExposuresSC" | d$relation=="num2ndExposuresSA"] <- "2nd"
 d$rel[d$relation=="numEnvExposuresSC" | d$relation=="numEnvExposuresSA"] <- "ENV"
 
+d$blood <- NA
+d$blood[d$relation == "num1stExposuresSC" | d$relation == "num1stExposuresSA" | d$relation=="num2ndExposuresSC" | d$relation=="num2ndExposuresSA"] <- "rel"
+d$blood[d$relation=="numEnvExposuresSC" | d$relation=="numEnvExposuresSA"] <- "nonrel"
+
+
 d1e <- d[d$rel=="1st" | d$rel=="ENV",]
 
 
@@ -126,6 +131,16 @@ car::Anova(m2, type = "III")
 lsmip(m2, GROUP12467 ~ sev, ylab = "log(event rate)", xlab = "type ", type = "predicted" )
 ls2 <- lsmeans(m2, "GROUP12467", by = "sev")
 plot(ls2, horiz = F)
+
+
+theta.ed <- theta.ml(na.omit(d$events), mean(na.omit(d$events)), length(d$events), limit = 50, eps = .Machine$double.eps^.25, trace = FALSE)
+summary(m3 <- glm(events ~  sev*GROUP12467 + blood*GROUP12467 + (1:ID), family = negative.binomial(theta = theta.resp), data = d))
+car::Anova(m3, type = "III")
+lsmip(m3, sev ~ GROUP12467 , ylab = "log(response rate)", xlab = "type ", type = "predicted" )
+ls3 <- lsmeans(m3, "GROUP12467", by = "blood")
+plot(ls3, horiz = F)
+
+
 
 ## we ended here on 9/21/17
 
