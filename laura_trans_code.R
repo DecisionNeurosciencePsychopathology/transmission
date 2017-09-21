@@ -9,7 +9,7 @@ library(gdata)
 library(xtable)
 library(Hmisc)
 library(nnet)
-library(reshape2)
+library(reshape)
 # library(ggbiplot)
 library(corrplot)
 library(lsmeans)
@@ -22,7 +22,9 @@ library(MASS)
 # library(fastICA)
 # library(plotly)
 
-df <- read_csv("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_MERGED.7.17.17.csv")
+df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
+"\t", escape_double = FALSE, trim_ws = TRUE)
+
 View(df)
 
 library(VIM)
@@ -53,6 +55,82 @@ df$race <- "NA"
 df$race[df$RACETEXT=="WHITE"] <- 0
 #minority are 1
 df$race[df$RACETEXT=="AFRICAN AMERICAN" | df$RACETEXT == "ASIAN PACIFIC"] <- 1
+
+# get counts of suicide attempts by relation cagetory
+
+# 1st degree
+df$num1stExposuresSA <- df$num1stExposuresSB - df$num1stExposuresSC
+df$num2ndExposuresSA <- df$num2ndExposuresSB - df$num2ndExposuresSC
+df$numEnvExposuresSA <- df$numEnvExposuresSB - df$numEnvExposuresSC
+
+df$num1stExposuresSC[df$num1stExposuresSC==9] <- NA
+df$num1stExposuresSB[df$num1stExposuresSB==9] <- NA
+df$num1stExposuresSA[df$num1stExposuresSA==9] <- NA
+
+df$num2ndExposuresSC[df$num2ndExposuresSC==9] <- NA
+df$num2ndExposuresSB[df$num2ndExposuresSB==9] <- NA
+df$num2ndExposuresSA[df$num2ndExposuresSA==9] <- NA
+
+df$numEnvExposuresSC[df$numEnvExposuresSC==9] <- NA
+df$numEnvExposuresSB[df$numEnvExposuresSB==9] <- NA
+df$numEnvExposuresSA[df$numEnvExposuresSA==9] <- NA
+
+m = melt(mac, na.rm = FALSE, measure.vars = c("SES","SEScurr"),value.name = c("SES"))
+
+df <- as.data.frame(df)
+
+d = melt(df, na.rm = FALSE, measure.vars = c("num1stExposuresSC","num1stExposuresSA", "num2ndExposuresSC", "num2ndExposuresSA", "numEnvExposuresSC", "numEnvExposuresSA"))
+
+# discard the stupid variables
+
+d <- d[,c(1:45,115:117)]
+d$relation <- d$variable
+d$events <- d$value
+d$sev[d$relation == "num1stExposuresSC" | d$relation == "num2ndExposuresSC" | d$relation == "numEnvExposuresSC"] <- "suicide"
+d$sev[d$relation == "num1stExposuresSA" | d$relation == "num2ndExposuresSA" | d$relation == "numEnvExposuresSA"] <- "attempt"
+d$rel <- NA
+d$rel[d$relation == "num1stExposuresSC" | d$relation == "num1stExposuresSA"] <- "1st"
+d$rel[d$relation=="num2ndExposuresSC" | d$relation=="num2ndExposuresSA"] <- "2nd"
+d$rel[d$relation=="numEnvExposuresSC" | d$relation=="numEnvExposuresSA"] <- "ENV"
+
+d1e <- d[d$rel=="1st" | d$rel=="ENV",]
+
+
+## check if distribution of events roughly fits NB
+
+nbfit <- suppressWarnings(fitdistr(na.omit(d1e$events), "negative binomial"))
+print(nbfit$estimate)
+simulated <- rnegbin(nbfit$n,nbfit$estimate[1],nbfit$estimate[2])
+actual <- d1e$events
+
+# just simple visual diagnostics
+histogram(~ simulated + actual)
+# conclusion -- not a perfect fit, but OK
+
+
+# build a model
+
+# estimate theta for nb
+
+theta.resp <- theta.ml(na.omit(d1e$events), mean(na.omit(d1e$events)), length(d1e$events), limit = 50, eps = .Machine$double.eps^.25, trace = FALSE)
+
+
+summary(m1 <- glm(events ~  sev*rel*GROUP12467 + (1:ID), family = negative.binomial(theta = theta.resp), data = d1e))
+car::Anova(m1, type = "III")
+
+lsmip(m1, sev ~ GROUP12467 | rel, ylab = "log(response rate)", xlab = "type ", type = "predicted" )
+lsmip(m1, GROUP12467 ~ rel | sev, ylab = "log(response rate)", xlab = "type ", type = "predicted" )
+
+summary(m2 <- glm(events ~  sev*GROUP12467 + rel*GROUP12467 + (1:ID), family = negative.binomial(theta = theta.resp), data = d1e))
+car::Anova(m2, type = "III")
+lsmip(m2, GROUP12467 ~ sev, ylab = "log(event rate)", xlab = "type ", type = "predicted" )
+ls2 <- lsmeans(m2, "GROUP12467", by = "sev")
+plot(ls2, horiz = F)
+
+## we ended here on 9/21/17
+
+
+
 # get group characteristics
 chars <- df[,c(2,5,7,8,9,10)]
 describe.by(chars,group = chars$GROUP1245)
