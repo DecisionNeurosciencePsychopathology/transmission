@@ -125,7 +125,7 @@ car::Anova(m1, type = "III")
 lsmip(m1, sev ~ GROUP12467 | rel, ylab = "log(response rate)", xlab = "type ", type = "predicted" )
 lsmip(m1, GROUP12467 ~ rel | sev, ylab = "log(response rate)", xlab = "type ", type = "predicted" )
 
-summary(m2 <- glm(events ~  sev*GROUP12467 + rel*GROUP12467 + (1:ID), family = negative.binomial(theta = theta.resp), data = d1e))
+summary(m2 <- glm(events ~  sev*GROUP12467 + rel*GROUP12467 + (1:ID), family = negative.binomial(theta = theta.resp), data = d))
 car::Anova(m2, type = "III")
 lsmip(m2, GROUP12467 ~ sev, ylab = "log(event rate)", xlab = "type ", type = "predicted" )
 ls2 <- lsmeans(m2, "GROUP12467", by = "sev")
@@ -133,11 +133,41 @@ plot(ls2, horiz = F)
 
 
 theta.ed <- theta.ml(na.omit(d$events), mean(na.omit(d$events)), length(d$events), limit = 50, eps = .Machine$double.eps^.25, trace = FALSE)
-summary(m3 <- glm(events ~  sev*GROUP12467 + blood*GROUP12467 + (1:ID), family = negative.binomial(theta = theta.resp), data = d))
+summary(m3 <- glm(events ~  sev*GROUP12467 + blood*GROUP12467 + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 car::Anova(m3, type = "III")
 lsmip(m3, sev ~ GROUP12467 , ylab = "log(response rate)", xlab = "type ", type = "predicted" )
 ls3 <- lsmeans(m3, "GROUP12467", by = "blood")
 plot(ls3, horiz = F)
+
+# demographics
+summary(m3a <- glm(events ~  GROUP12467  + BASELINEAGE*sev*blood + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+car::Anova(m3a, type = "III")
+ls3a <- lsmeans(m3a, "BASELINEAGE", by = "sev", at = list(BASELINEAGE=c(50,65,80)))
+plot(ls3a, horiz = F)
+
+summary(m3a1 <- glm(events ~  GROUP12467  + BASELINEAGE*sev*blood + EDUCATION  + race + AGEDEPONSET + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+car::Anova(m3a1, type = "III")
+
+summary(m3a2 <- glm(events ~  GROUP12467  + BASELINEAGE*sev*blood + EDUCATION  + race + PTSDLifetime + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+car::Anova(m3a2, type = "III")
+
+
+summary(m3b <- glm(events ~  AGEATFIRSTATTEMPT*sev + AGEATFIRSTATTEMPT*blood + BASELINEAGE + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+car::Anova(m3b, type = "III")
+ls3b <- lsmeans(m3b, "AGEATFIRSTATTEMPT", by = "sev", at = list(AGEATFIRSTATTEMPT=c(20,50,80)))
+plot(ls3b, horiz = F)
+ls3b1 <- lsmeans(m3b, "AGEATFIRSTATTEMPT", by = "blood", at = list(AGEATFIRSTATTEMPT=c(20,50,80)))
+plot(ls3b1, horiz = F)
+
+summary(m3c <- glm(events ~  AGEATFIRSTATTEMPT*sev + AGEATFIRSTATTEMPT*blood + BASELINEAGE +  (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+car::Anova(m3c, type = "III")
+
+
+summary(m4 <- glm(events ~   GROUP1245 + BASELINEAGE*sev*blood + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+car::Anova(m4, type = "III")
+
+summary(m5 <- glm(events ~  GROUP12467  + BASELINEAGE*sev*blood + EDUCATION  + race + PTSDLifetime + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+car::Anova(m5, type = "III")
 
 
 
@@ -145,49 +175,50 @@ plot(ls3, horiz = F)
 
 
 
+
 # get group characteristics
 chars <- df[,c(2,5,7,8,9,10)]
 describe.by(chars,group = chars$GROUP1245)
 
-
-m1 <- glm(firstdegSB ~ GROUP12467, family = binomial(link = "logit"), data = df)
-summary(m1)
-anova(m1, test = "LR")
-ls1 <- lsmeans(m1,"GROUP1245")
-plot(ls1, horiz = F)
-
-m2 <- glm(firstdegSB ~ GROUP1245*BASELINEAGE, family = binomial(link = "logit"), data = df)
-summary(m2)
-anova(m2, test = "LR")
-
-# does m2 fit better than m1?
-anova(m1,m2, test = "LR")
-
-m3 <- glm(firstdegSB ~ GROUP12467 + BASELINEAGE, family = binomial(link = "logit"), data = df)
-summary(m3)
-anova(m3, test = "LR")
-anova(m2,m3, test = "LR")
-
-m4 <- glm(firstdegSB ~ GROUP12467 + BASELINEAGE + GENDERTEXT + race, family = binomial(link = "logit"), data = df)
-summary(m4)
-anova(m4, test = "LR")
-anova(m3,m4, test = "LR")
-ls4 <- lsmeans(m4,"GROUP12467")
-plot(ls4, horiz = F)
-
-
-# does first degree Hx vary by attempt characteristics
-am1 <- glm(firstdegSB ~ AGEATFIRSTATTEMPT, family = binomial(link = "logit"), data = df[df$GROUP1245==5,])
-summary(am1)
-
-am2 <- glm(firstdegSB ~ AGEATFIRSTATTEMPT + TOTALATTEMPTS, family = binomial(link = "logit"), data = df[df$GROUP1245==5,])
-summary(am2)
-
-
-cm1 <-  glm(firstdegSC ~ GROUP12467 + BASELINEAGE , family = binomial(link = "logit"), data = df)
-summary(cm1)
-anova(cm1, test = "LR")
-lscm1 <- lsmeans(cm1,"GROUP12467")
-plot(cm1, horiz = F)
+# 
+# m1 <- glm(firstdegSB ~ GROUP12467, family = binomial(link = "logit"), data = df)
+# summary(m1)
+# anova(m1, test = "LR")
+# ls1 <- lsmeans(m1,"GROUP1245")
+# plot(ls1, horiz = F)
+# 
+# m2 <- glm(firstdegSB ~ GROUP1245*BASELINEAGE, family = binomial(link = "logit"), data = df)
+# summary(m2)
+# anova(m2, test = "LR")
+# 
+# # does m2 fit better than m1?
+# anova(m1,m2, test = "LR")
+# 
+# m3 <- glm(firstdegSB ~ GROUP12467 + BASELINEAGE, family = binomial(link = "logit"), data = df)
+# summary(m3)
+# anova(m3, test = "LR")
+# anova(m2,m3, test = "LR")
+# 
+# m4 <- glm(firstdegSB ~ GROUP12467 + BASELINEAGE + GENDERTEXT + race, family = binomial(link = "logit"), data = df)
+# summary(m4)
+# anova(m4, test = "LR")
+# anova(m3,m4, test = "LR")
+# ls4 <- lsmeans(m4,"GROUP12467")
+# plot(ls4, horiz = F)
+# 
+# 
+# # does first degree Hx vary by attempt characteristics
+# am1 <- glm(firstdegSB ~ AGEATFIRSTATTEMPT, family = binomial(link = "logit"), data = df[df$GROUP1245==5,])
+# summary(am1)
+# 
+# am2 <- glm(firstdegSB ~ AGEATFIRSTATTEMPT + TOTALATTEMPTS, family = binomial(link = "logit"), data = df[df$GROUP1245==5,])
+# summary(am2)
+# 
+# 
+# cm1 <-  glm(firstdegSC ~ GROUP12467 + BASELINEAGE , family = binomial(link = "logit"), data = df)
+# summary(cm1)
+# anova(cm1, test = "LR")
+# lscm1 <- lsmeans(cm1,"GROUP12467")
+# plot(cm1, horiz = F)
 sc_tbl <- table(df$GROUP12467,df$firstdegSC)
 sc_tbl_chsq <- chisq.test(sc_tbl)
