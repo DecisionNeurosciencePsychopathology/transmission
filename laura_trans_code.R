@@ -9,7 +9,7 @@ library(gdata)
 library(xtable)
 library(Hmisc)
 library(nnet)
-library(reshape)
+library(reshape2)
 # library(ggbiplot)
 library(corrplot)
 library(lsmeans)
@@ -27,13 +27,13 @@ df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMH
 
 View(df)
 
-library(VIM)
-df_aggr = aggr(df, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(df), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
+# library(VIM)
+# df_aggr = aggr(df, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(df), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
 
 
-hist(df$MOMMH)
-describe(df$ENVRNMTL)
-unique(df$ENVRNMTL)
+# hist(df$MOMMH)
+# describe(df$ENVRNMTL)
+# unique(df$ENVRNMTL)
 
 # designate factors
 
@@ -75,7 +75,6 @@ df$numEnvExposuresSC[df$numEnvExposuresSC==9] <- NA
 df$numEnvExposuresSB[df$numEnvExposuresSB==9] <- NA
 df$numEnvExposuresSA[df$numEnvExposuresSA==9] <- NA
 
-m = melt(mac, na.rm = FALSE, measure.vars = c("SES","SEScurr"),value.name = c("SES"))
 
 df <- as.data.frame(df)
 
