@@ -166,12 +166,23 @@ car::Anova(m3c, type = "III")
 summary(m4 <- glm(events ~   GROUP1245 + BASELINEAGE*sev*blood + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 car::Anova(m4, type = "III")
 
-summary(m5 <- glm(events ~  GROUP12467  + BASELINEAGE*sev*blood + EDUCATION  + race + PTSDLifetime + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+summary(m5 <- glm(events ~  GROUP1245  + BASELINEAGE*sev*blood + EDUCATION  + race + PTSDLifetime + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 car::Anova(m5, type = "III")
+ls5 <- lsmeans(m5, "GROUP1245")
+plot(ls5, horiz = F)
+multcomp::cld(ls5)
+d$GROUP[d$GROUP=='DEPRESSION-IDEATOR'] <- "IDEATOR"
+d$group_early <- d$GROUP
+d$group_early[d$AGEATFIRSTATTEMPT<60] <- "EARLY_ATTEMPT"
+d$group_early[d$AGEATFIRSTATTEMPT>59] <- "LATE_ATTEMPT"
 
-
-
-## we ended here on 9/21/17
+summary(m6 <- glm(events ~  group_early*sev*blood  + BASELINEAGE*sev +  EDUCATION  + race + PTSDLifetime + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+car::Anova(m6, type = "III")
+ls6 <- lsmeans(m6, "group_early", by = (c("sev","blood")))
+plot(ls6)
+ls6a <- lsmeans(m6, "group_early")
+plot(ls6a)
+multcomp::cld(ls6a)
 
 
 
