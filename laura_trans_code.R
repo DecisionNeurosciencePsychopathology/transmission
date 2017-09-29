@@ -1,5 +1,7 @@
-#TEST TO SEE IF I CAN PUSH CHANGES
+#install.packages(c("car","readr", "lme4", "ggplot2", "tidyr", "psych", "gdata", "xtable", "Hmisc", "nnet", 
+#"reshape2", "corrplot", "lsmeans", "readxl", "MASS"))
 
+library (car)
 library(readr)
 library(lme4)
 library(ggplot2)
@@ -24,8 +26,15 @@ library(MASS)
 # library(fastICA)
 # library(plotly)
 
-df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
-"\t", escape_double = FALSE, trim_ws = TRUE)
+# at home
+setwd("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission")
+
+df <- read_delim("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
+                 "\t", escape_double = FALSE, trim_ws = TRUE)
+
+# at work
+#df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
+#"\t", escape_double = FALSE, trim_ws = TRUE)
 
 View(df)
 
