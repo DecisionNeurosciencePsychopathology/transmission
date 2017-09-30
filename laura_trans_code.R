@@ -176,6 +176,12 @@ d$group_early <- d$GROUP
 d$group_early[d$AGEATFIRSTATTEMPT<60] <- "EARLY_ATTEMPT"
 d$group_early[d$AGEATFIRSTATTEMPT>59] <- "LATE_ATTEMPT"
 
+# d$group_v_early <- d$GROUP
+# d$group_v_early[d$AGEATFIRSTATTEMPT<60] <- "MID_ATTEMPT"
+# d$group_v_early[d$AGEATFIRSTATTEMPT>59] <- "LATE_ATTEMPT"
+# d$group_v_early[d$AGEATFIRSTATTEMPT<25] <- "EARLY_ATTEMPT"
+
+
 summary(m6 <- glm(events ~  group_early*sev*blood  + BASELINEAGE*sev +  EDUCATION  + race + PTSDLifetime + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 car::Anova(m6, type = "III")
 ls6 <- lsmeans(m6, "group_early", by = (c("sev","blood")))
@@ -184,6 +190,14 @@ ls6a <- lsmeans(m6, "group_early")
 plot(ls6a)
 multcomp::cld(ls6a)
 
+
+# summary(m7 <- glm(events ~  group_v_early*sev*blood  + BASELINEAGE*sev +  EDUCATION  + race + PTSDLifetime + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+# car::Anova(m7, type = "III")
+# ls7 <- lsmeans(m7, "group_v_early", by = (c("sev","blood")))
+# plot(ls7)
+# ls7a <- lsmeans(m7, "group_v_early")
+# plot(ls7a)
+# multcomp::cld(ls7a)
 
 
 
