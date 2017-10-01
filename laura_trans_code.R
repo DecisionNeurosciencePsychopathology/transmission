@@ -18,14 +18,17 @@ library(lsmeans)
 library(readxl)
 # library(linbin)
 library(MASS)
+library(stargazer)
+library(compareGroups)
+
 # library(lattice)
 # library(fastICA)
 # library(plotly)
 
 df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
 "\t", escape_double = FALSE, trim_ws = TRUE)
-
-View(df)
+setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
+# View(df)
 
 # library(VIM)
 # df_aggr = aggr(df, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(df), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
@@ -39,7 +42,28 @@ View(df)
 
 df$GROUP1245 <- as.factor(df$GROUP1245)
 df$GROUP12467 <- as.factor(df$GROUP12467)
+df$SubstanceLifetime[df$GROUP1245==1] <- NA
+df$HRSDNOSUICIDE[df$GROUP1245==1] <- NA
+df$AnxietyLifetime[df$GROUP1245==1] <- NA
+df$TOTALATTEMPTS[df$GROUP1245!=5] <- NA
+df$MAXLETHALITY[df$GROUP1245!=5] <- NA
 
+df$GROUP[df$GROUP=='DEPRESSION-IDEATOR'] <- "IDEATOR"
+df$group_early <- df$GROUP
+df$group_early[df$group_early=="CONTROL"] <- "Non-psychiatric controls"
+df$group_early[df$group_early=="DEPRESSION"] <- "Non-suicidal depressed"
+df$group_early[df$group_early=="IDEATOR"] <- "Suicide ideators"
+
+df$group_early[df$AGEATFIRSTATTEMPT<60] <- "Early-onset attempters"
+df$group_early[df$AGEATFIRSTATTEMPT>59] <- "Late-onset attempters"
+df$group_early <- as.factor(df$group_early)
+df$group_early = factor(df$group_early, levels(df$group_early)[c(3,4,5,1,2)])
+df$group_early_no_break <- df$group_early
+levels(df$group_early) <- gsub(" ", "\n", levels(df$group_early))
+df$group_early_no_break=gsub("\n", " ", df$group_early)
+df$group_early_no_break <- as.factor(df$group_early_no_break)
+df$SubstanceLifetime <- as.factor(df$SubstanceLifetime)
+df$AnxietyLifetime <- as.factor(df$AnxietyLifetime)
 
 # recode a variable: everyone with a h/o suicidal behavior among 2nd degree relatives
 df$seconddegSB <- 0
@@ -82,7 +106,7 @@ d = melt(df, na.rm = FALSE, measure.vars = c("num1stExposuresSC","num1stExposure
 
 # discard the stupid variables
 
-d <- d[,c(1:45,115:117)]
+d <- d[,c(1:45,113:ncol(d))]
 d$relation <- d$variable
 d$events <- d$value
 d$sev[d$relation == "num1stExposuresSC" | d$relation == "num2ndExposuresSC" | d$relation == "numEnvExposuresSC"] <- "suicide"
@@ -102,10 +126,10 @@ d1e <- d[d$rel=="1st" | d$rel=="ENV",]
 
 ## check if distribution of events roughly fits NB
 
-nbfit <- suppressWarnings(fitdistr(na.omit(d1e$events), "negative binomial"))
+nbfit <- suppressWarnings(fitdistr(na.omit(d$events), "negative binomial"))
 print(nbfit$estimate)
 simulated <- rnegbin(nbfit$n,nbfit$estimate[1],nbfit$estimate[2])
-actual <- d1e$events
+actual <- d$events
 
 # just simple visual diagnostics
 histogram(~ simulated + actual)
@@ -171,18 +195,13 @@ car::Anova(m5, type = "III")
 ls5 <- lsmeans(m5, "GROUP1245")
 plot(ls5, horiz = F)
 multcomp::cld(ls5)
-d$GROUP[d$GROUP=='DEPRESSION-IDEATOR'] <- "IDEATOR"
-d$group_early <- d$GROUP
-d$group_early[d$AGEATFIRSTATTEMPT<60] <- "EARLY_ATTEMPT"
-d$group_early[d$AGEATFIRSTATTEMPT>59] <- "LATE_ATTEMPT"
-
 # d$group_v_early <- d$GROUP
 # d$group_v_early[d$AGEATFIRSTATTEMPT<60] <- "MID_ATTEMPT"
 # d$group_v_early[d$AGEATFIRSTATTEMPT>59] <- "LATE_ATTEMPT"
 # d$group_v_early[d$AGEATFIRSTATTEMPT<25] <- "EARLY_ATTEMPT"
 
 
-summary(m6 <- glm(events ~  group_early*sev*blood  + BASELINEAGE*sev +  EDUCATION  + race + PTSDLifetime + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+summary(m6 <- glm(events ~  group_early*sev*blood  + BASELINEAGE*sev +  EDUCATION  + race  + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 car::Anova(m6, type = "III")
 ls6 <- lsmeans(m6, "group_early", by = (c("sev","blood")))
 plot(ls6)
@@ -200,50 +219,94 @@ multcomp::cld(ls6a)
 # multcomp::cld(ls7a)
 
 
+summary(m8 <- glm(events ~  group_early + blood  + BASELINEAGE +  EDUCATION  + race  + (1:ID), family = negative.binomial(theta = theta.ed), data = d[d$sev=="suicide",]))
+car::Anova(m8, type = "III")
+ls8 <- lsmeans(m8, "group_early")
+plot(ls8)
+multcomp::cld(ls8)
 
-# get group characteristics
-chars <- df[,c(2,5,7,8,9,10)]
-describe.by(chars,group = chars$GROUP1245)
+# dichotomize exposure
+d$exp <- d$events>0
+summary(m9 <- glm(exp ~  group_early + sev*blood + BASELINEAGE*sev +  EDUCATION  + race  + (1:ID), family = binomial, data = d))
+car::Anova(m9, type = "III")
+ls9 <- lsmeans(m9, "group_early")
+plot(ls9, horiz = F)
+multcomp::cld(ls9)
 
-# 
-# m1 <- glm(firstdegSB ~ GROUP12467, family = binomial(link = "logit"), data = df)
-# summary(m1)
-# anova(m1, test = "LR")
-# ls1 <- lsmeans(m1,"GROUP1245")
-# plot(ls1, horiz = F)
-# 
-# m2 <- glm(firstdegSB ~ GROUP1245*BASELINEAGE, family = binomial(link = "logit"), data = df)
-# summary(m2)
-# anova(m2, test = "LR")
-# 
-# # does m2 fit better than m1?
-# anova(m1,m2, test = "LR")
-# 
-# m3 <- glm(firstdegSB ~ GROUP12467 + BASELINEAGE, family = binomial(link = "logit"), data = df)
-# summary(m3)
-# anova(m3, test = "LR")
-# anova(m2,m3, test = "LR")
-# 
-# m4 <- glm(firstdegSB ~ GROUP12467 + BASELINEAGE + GENDERTEXT + race, family = binomial(link = "logit"), data = df)
-# summary(m4)
-# anova(m4, test = "LR")
-# anova(m3,m4, test = "LR")
-# ls4 <- lsmeans(m4,"GROUP12467")
-# plot(ls4, horiz = F)
-# 
-# 
-# # does first degree Hx vary by attempt characteristics
-# am1 <- glm(firstdegSB ~ AGEATFIRSTATTEMPT, family = binomial(link = "logit"), data = df[df$GROUP1245==5,])
-# summary(am1)
-# 
-# am2 <- glm(firstdegSB ~ AGEATFIRSTATTEMPT + TOTALATTEMPTS, family = binomial(link = "logit"), data = df[df$GROUP1245==5,])
-# summary(am2)
-# 
-# 
-# cm1 <-  glm(firstdegSC ~ GROUP12467 + BASELINEAGE , family = binomial(link = "logit"), data = df)
-# summary(cm1)
-# anova(cm1, test = "LR")
-# lscm1 <- lsmeans(cm1,"GROUP12467")
-# plot(cm1, horiz = F)
-sc_tbl <- table(df$GROUP12467,df$firstdegSC)
-sc_tbl_chsq <- chisq.test(sc_tbl)
+summary(m10 <- glm(exp ~  group_early + sev*blood + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
+car::Anova(m10, type = "III")
+ls10 <- lsmeans(m10, pairwise ~ group_early)
+# plot(ls10, horiz = F)
+
+
+summary(m11 <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
+car::Anova(m11, type = "III")
+ls11 <- lsmeans(m11, "group_early")
+plot(ls11)
+
+# specifically test group*relation to rule out familial clustering: NS, does not improve fit
+summary(m11a <- glm(exp ~  group_early*sev*rel + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
+car::Anova(m11a, type = "III")
+anova(m11,m11a, test = "Rao")
+
+# plot NS interaction for qualitative look:  still a problem with 2nd degree
+ls11a <- lsmeans(m11a, "group_early", by = "rel")
+plot(ls11a)
+
+
+# test substance and anxiety -- not significant
+summary(m12 <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  EDUCATION  + race + SubstanceLifetime + AnxietyLifetime + (1:ID), family = binomial, data = d))
+car::Anova(m12, type = "III")
+anova(m11,m12, test = "Rao")
+
+#plot figure
+CLD <- multcomp::cld(ls11,
+                     alpha=0.05,
+                     Letters=letters,
+                     adjust="tukey")
+CLD$.group=gsub(" ", "", CLD$.group)
+# CLD$g=c("Non-psychiatric controls", "Non-suicidal depressed", "Suicide ideators", "Early-onset attempters", "Late-onset attempters")
+
+
+pdf(file = "Exposure by group PRETTY.pdf", width = 8, height = 6)
+pd = position_dodge(0.8)    ### How much to jitter the points on the plot
+ggplot(CLD,
+       aes(x     = group_early,
+           y     = lsmean,
+           label = .group)) +
+  xlab(NULL) +
+  geom_point(shape  = 15,
+             size   = 4,
+             position = pd) +
+  geom_errorbar(aes(ymin  =  asymp.LCL,
+                    ymax  =  asymp.UCL),
+                width =  0.2,
+                size  =  0.7,
+                position = pd) +
+  theme_bw() +
+  theme(axis.title   = element_text(face = "bold"),
+        axis.text    = element_text(face = "bold"),
+        plot.caption = element_text(hjust = 0)) +
+  ylab("Least square log probability of suicidal behavior among family or friends \nLower prevalence   <-   ->   Higher prevalence") +
+  ggtitle ("Occurrence of suicidal behavior among family or friends by group",
+           subtitle = "Binary logistic mixed-effects model") +
+  labs(caption  = paste0("\n",
+                         "Boxes indicate the LS mean log probability.\n",
+                         "Error bars indicate the 95% ",
+                         "confidence interval of the LS mean. \n",
+                         "Means sharing a letter are ",
+                         "not significantly different ",
+                         "(Tukey-adjusted comparisons)."),
+       hjust=0.5) +
+  geom_text(nudge_x = c(0.1, -0.1, 0.1, -0.1, 0.1),
+             nudge_y = c(0.8,  0.8, 0.8,  0.8, 0.8),
+             color   = "black")
+dev.off()
+
+
+# get group characteristics and make Table 1
+chars <- df[,c(2,7,8,9,10,18,40,42, 14,11)]
+# describe.by(chars,group = df$group_early_no_break)
+c <- compareGroups(chars,df$group_early_no_break)
+createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1)
+export2html(createTable(c), "Table1.html")
