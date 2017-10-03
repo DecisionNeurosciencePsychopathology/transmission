@@ -62,6 +62,7 @@ df$group_early_no_break <- df$group_early
 levels(df$group_early) <- gsub(" ", "\n", levels(df$group_early))
 df$group_early_no_break=gsub("\n", " ", df$group_early)
 df$group_early_no_break <- as.factor(df$group_early_no_break)
+df$group_early_no_break = factor(df$group_early_no_break, levels(df$group_early_no_break)[c(3,4,5,1,2)])
 df$SubstanceLifetime <- as.factor(df$SubstanceLifetime)
 df$AnxietyLifetime <- as.factor(df$AnxietyLifetime)
 
@@ -305,8 +306,17 @@ dev.off()
 
 
 # get group characteristics and make Table 1
-chars <- df[,c(2,7,8,9,10,18,40,42, 14,11)]
+chars <- df[,c(2,7,8,9,10, 18,40,42, 14,11, 17)]
 # describe.by(chars,group = df$group_early_no_break)
 c <- compareGroups(chars,df$group_early_no_break)
 createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1)
 export2html(createTable(c), "Table1.html")
+
+
+# more comparisons of early vs late for a possible future paper
+chars <- df[df$GROUP1245==5,c(19:37)]
+# describe.by(chars,group = df$group_early_no_break)
+c1 <- compareGroups(chars,df$group_early_no_break[df$GROUP1245==5])
+createTable(c1,hide = NA, hide.no = 0, digits = 1, show.n = TRUE)
+
+
