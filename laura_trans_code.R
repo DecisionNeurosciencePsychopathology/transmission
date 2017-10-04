@@ -1,4 +1,4 @@
-#install.packages(c("car","readr", "lme4", "ggplot2", "tidyr", "psych", "gdata", "xtable", "Hmisc", "nnet", 
+#install.packages(c("car","readr", "lme4", "ggplot2", "tidyr", "psych", "gdata", "xtable", "Hmisc", "nnet",
 #"reshape2", "corrplot", "lsmeans", "readxl", "MASS"))
 
 library (car)
@@ -29,24 +29,22 @@ library(compareGroups)
 # library(fastICA)
 # library(plotly)
 
-<<<<<<< HEAD
 df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
 "\t", escape_double = FALSE, trim_ws = TRUE)
 setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
 # View(df)
-=======
-# at home
-setwd("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission")
 
-df <- read_delim("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
-                 "\t", escape_double = FALSE, trim_ws = TRUE)
+  # at home
+# setwd("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission")
+#
+# df <- read_delim("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
+#                  "\t", escape_double = FALSE, trim_ws = TRUE)
 
 # at work
 #df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
 #"\t", escape_double = FALSE, trim_ws = TRUE)
 
 View(df)
->>>>>>> 2167cc69b99232ff1c1008acc3f8757cd3b2534f
 
 # library(VIM)
 # df_aggr = aggr(df, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(df), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
