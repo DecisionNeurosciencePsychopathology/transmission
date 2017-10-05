@@ -1,6 +1,6 @@
 #install.packages(c("car","readr", "lme4", "ggplot2", "tidyr", "psych", "gdata", "xtable", "Hmisc", "nnet", 
-#"reshape2", "corrplot", "lsmeans", "readxl", "MASS"))
-
+#"reshape2", "corrplot", "lsmeans", "readxl", "MASS", "stargazer", "compareGroups"))
+  
 library (car)
 library(readr)
 library(lme4)
@@ -30,9 +30,9 @@ library(compareGroups)
 # library(plotly)
 
 <<<<<<< HEAD
-df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
-"\t", escape_double = FALSE, trim_ws = TRUE)
-setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
+#df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
+#"\t", escape_double = FALSE, trim_ws = TRUE)
+#setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
 # View(df)
 =======
 # at home
