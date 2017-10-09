@@ -287,7 +287,7 @@ plot(ls11a)
 # test substance and anxiety -- not significant
 summary(m12 <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  EDUCATION  + race + SubstanceLifetime + AnxietyLifetime + (1:ID), family = binomial, data = d))
 car::Anova(m12, type = "III")
-anova(m11,m12, test = "Rao")
+# anova(m11,m12, test = "Rao")
 
 #plot figure
 CLD <- multcomp::cld(ls11,
@@ -345,7 +345,18 @@ export2html(createTable(c), "Table1.html")
 # more comparisons of early vs late for a possible future paper
 chars <- df[df$GROUP1245==5,c(19:37)]
 # describe.by(chars,group = df$group_early_no_break)
-c1 <- compareGroups(chars,df$group_early_no_break[df$GROUP1245==5])
-createTable(c1,hide = NA, hide.no = 0, digits = 1, show.n = TRUE)
+c1 <- compareGroups(chars,df$group_early_no_break[df$GROUP1245==5], bivar=TRUE)
+t1 <- createTable(c1,hide = NA, hide.no = 0, digits = 1, show.n = TRUE)
+export2html(t1, "early_vs_late.html")
 
+chars <- df[,c(19:37)]
+# describe.by(chars,group = df$group_early_no_break)
+c2 <- compareGroups(chars,df$group_early_no_break, bivar=TRUE)
+t2 <- createTable(c2,hide = NA, hide.no = 0, digits = 1, show.n = TRUE)
+export2html(t2, "early_vs_late_comparison_groups.html")
 
+# check anger: nothing with either measure, consider dropping from battery
+summary(tam1 <- lm(ARSTOTAL ~ group_early_no_break + BASELINEAGE + GENDERTEXT, data = df))
+anova(tam1)
+plot(lsmeans(tam1, "group_early_no_break"))
+cld(lsmeans(tam1, "group_early_no_break"))
