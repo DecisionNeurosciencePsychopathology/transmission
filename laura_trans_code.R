@@ -1,12 +1,7 @@
-<<<<<<< HEAD
 #install.packages(c("car","readr", "lme4", "ggplot2", "tidyr", "psych", "gdata", "xtable", "Hmisc", "nnet", 
-#"reshape2", "corrplot", "lsmeans", "readxl", "MASS", "stargazer", "compareGroups"))
-  
-=======
-#install.packages(c("car","readr", "lme4", "ggplot2", "tidyr", "psych", "gdata", "xtable", "Hmisc", "nnet",
-#"reshape2", "corrplot", "lsmeans", "readxl", "MASS"))
+#"reshape2", "corrplot", "lsmeans", "readxl", "MASS", "stargazer", "compareGroups", "multcompView"))
 
->>>>>>> origin/master
+library(multcompView)
 library (car)
 library(readr)
 library(lme4)
@@ -35,33 +30,32 @@ library(compareGroups)
 # library(fastICA)
 # library(plotly)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-#df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
+
+#df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
 #"\t", escape_double = FALSE, trim_ws = TRUE)
 #setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
-=======
-df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
-"\t", escape_double = FALSE, trim_ws = TRUE)
-setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
->>>>>>> origin/master
+
+#df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
+#"\t", escape_double = FALSE, trim_ws = TRUE)
+#setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
+ 
 # View(df)
 
-  # at home
-# setwd("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission")
-#
-# df <- read_delim("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
-#                  "\t", escape_double = FALSE, trim_ws = TRUE)
+#at home
+setwd("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission")
+df <- read_delim("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
+                 "\t", escape_double = FALSE, trim_ws = TRUE)
+
+names(df)
 
 # at work
-#df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
+#df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
 #"\t", escape_double = FALSE, trim_ws = TRUE)
 
 View(df)
 
 # library(VIM)
 # df_aggr = aggr(df, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(df), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
-
 
 # hist(df$MOMMH)
 # describe(df$ENVRNMTL)
