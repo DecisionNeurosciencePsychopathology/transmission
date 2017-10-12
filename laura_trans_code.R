@@ -270,15 +270,16 @@ ls9 <- lsmeans(m9, "group_early", by = "blood")
 plot(ls9, horiz = F)
 multcomp::cld(ls9)
 
-summary(m10 <- glm(exp ~  group_early*blood + sev*blood + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
+summary(m10 <- glm(exp ~  group_early*rel + rel*sev + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
 car::Anova(m10, type = "III")
-ls10 <- lsmeans(m10, "group_early", by = "blood")
+# do not worry about this interaction plot -- just did it to rule out familial clustering once and for all
+ls10 <- lsmeans(m10, "group_early", by = "rel")
 plot(ls10, horiz = F)
 multcomp::cld(ls10)
 anova(m9,m10,test = "Rao")
 
 
-summary(m11 <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
+summary(m11 <- glm(exp ~  group_early + rel*sev + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
 car::Anova(m11, type = "III")
 ls11 <- lsmeans(m11, "group_early")
 plot(ls11, horiz = F)
@@ -299,6 +300,16 @@ plot(ls11a)
 summary(m12 <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  EDUCATION  + race + SubstanceLifetime + AnxietyLifetime + (1:ID), family = binomial, data = d))
 car::Anova(m12, type = "III")
 # anova(m11,m12, test = "Rao")
+
+stargazer(m1, m2.0, m2, m2.1,  type="html", digits = 1,single.row=TRUE,  star.cutoffs = c(0.05, 0.01, 0.001), report = 'vcs*',
+          dep.var.labels=c("SES"), covariate.labels=c("Timepoint: highest vs. current","Education",
+                                                      "Age","Standardized income",   "Timepoint*education", 
+                                                      "Timepoint*age", "Timepoint*income",  "Healthy control (vs. attempter)", 
+                                                      "Depressed control (vs. attempter)", "Ideator (vs. attempter)", "Current addiction", 
+                                                      "Timepoint*Healthy control", "Timepoint*Depressed control", "Timepoint*Ideator", 
+                                                      "Timepoint*Current addiction"), out="ses_pretty.htm")
+
+stargazer(m10,m11, type="html", out="trans.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
 
 #plot figure
 CLD <- multcomp::cld(ls11,
