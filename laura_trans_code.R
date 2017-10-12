@@ -35,16 +35,22 @@ library(compareGroups)
 #"\t", escape_double = FALSE, trim_ws = TRUE)
 #setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
 
-#df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
-#"\t", escape_double = FALSE, trim_ws = TRUE)
-#setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
+df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.csv",
+"\t", escape_double = FALSE, trim_ws = TRUE)
+
+## these are the old data before Laura's recoding of aunts and uncles into 2nd degree relatives
+# df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
+# "\t", escape_double = FALSE, trim_ws = TRUE)
+
+
+setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
  
 # View(df)
 
 #at home
-setwd("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission")
-df <- read_delim("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
-                 "\t", escape_double = FALSE, trim_ws = TRUE)
+# setwd("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission")
+# df <- read_delim("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
+#                  "\t", escape_double = FALSE, trim_ws = TRUE)
 
 names(df)
 
@@ -167,8 +173,11 @@ histogram(~ simulated + actual)
 theta.resp <- theta.ml(na.omit(d1e$events), mean(na.omit(d1e$events)), length(d1e$events), limit = 50, eps = .Machine$double.eps^.25, trace = FALSE)
 
 
-summary(m1 <- glm(events ~  sev*rel*GROUP12467 + (1:ID), family = negative.binomial(theta = theta.resp), data = d1e))
+summary(m1 <- glm(events ~  sev*rel*GROUP12467 + (1:ID), family = negative.binomial(theta = theta.resp), data = d))
 car::Anova(m1, type = "III")
+ls1 <- lsmeans(m1, "GROUP12467", by = "rel")
+plot(ls1, horiz = F)
+
 
 lsmip(m1, sev ~ GROUP12467 | rel, ylab = "log(response rate)", xlab = "type ", type = "predicted" )
 lsmip(m1, GROUP12467 ~ rel | sev, ylab = "log(response rate)", xlab = "type ", type = "predicted" )
@@ -181,9 +190,9 @@ plot(ls2, horiz = F)
 
 
 theta.ed <- theta.ml(na.omit(d$events), mean(na.omit(d$events)), length(d$events), limit = 50, eps = .Machine$double.eps^.25, trace = FALSE)
-summary(m3 <- glm(events ~  sev*GROUP12467 + blood*GROUP12467 + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+summary(m3 <- glm(events ~  sev*GROUP12467*blood + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 car::Anova(m3, type = "III")
-lsmip(m3, sev ~ GROUP12467 , ylab = "log(response rate)", xlab = "type ", type = "predicted" )
+lsmip(m3, sev ~ GROUP12467 | blood , ylab = "log(response rate)", xlab = "type ", type = "predicted" )
 ls3 <- lsmeans(m3, "GROUP12467", by = "blood")
 plot(ls3, horiz = F)
 
@@ -249,24 +258,32 @@ ls8 <- lsmeans(m8, "group_early")
 plot(ls8)
 multcomp::cld(ls8)
 
+# exclude healthy controls
+dd <- d[d$GROUP1245 != "1",]
+
 # dichotomize exposure
 d$exp <- d$events>0
-summary(m9 <- glm(exp ~  group_early + sev*blood + BASELINEAGE*sev +  EDUCATION  + race  + (1:ID), family = binomial, data = d))
+summary(m9 <- glm(exp ~  group_early*sev +group_early*blood + BASELINEAGE*sev +  EDUCATION  + race  + (1:ID), family = binomial, data = d))
 car::Anova(m9, type = "III")
-ls9 <- lsmeans(m9, "group_early")
+lsmip(m9,  sev ~ group_early |blood, ylab = "log(response rate)", xlab = "type ", type = "predicted" )
+ls9 <- lsmeans(m9, "group_early", by = "blood")
 plot(ls9, horiz = F)
 multcomp::cld(ls9)
 
-summary(m10 <- glm(exp ~  group_early + sev*blood + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
+summary(m10 <- glm(exp ~  group_early*blood + sev*blood + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
 car::Anova(m10, type = "III")
-ls10 <- lsmeans(m10, pairwise ~ group_early)
-# plot(ls10, horiz = F)
+ls10 <- lsmeans(m10, "group_early", by = "blood")
+plot(ls10, horiz = F)
+multcomp::cld(ls10)
+anova(m9,m10,test = "Rao")
 
 
 summary(m11 <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
 car::Anova(m11, type = "III")
 ls11 <- lsmeans(m11, "group_early")
-plot(ls11)
+plot(ls11, horiz = F)
+anova(m10,m11,test = "Rao")
+
 
 # specifically test group*relation to rule out familial clustering: NS, does not improve fit
 summary(m11a <- glm(exp ~  group_early*sev*rel + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
