@@ -283,6 +283,11 @@ summary(m11 <- glm(exp ~  group_early + rel*sev + BASELINEAGE*sev +  EDUCATION  
 car::Anova(m11, type = "III")
 ls11 <- lsmeans(m11, "group_early")
 plot(ls11, horiz = F)
+# evaluate interaction
+ls11age <- lsmeans(m11, "sev", by = "BASELINEAGE", at = list(BASELINEAGE = c(40,60,80)))
+plot(ls11age, horiz = F)
+
+
 anova(m10,m11,test = "Rao")
 
 
@@ -301,13 +306,13 @@ summary(m12 <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  EDUCATION  
 car::Anova(m12, type = "III")
 # anova(m11,m12, test = "Rao")
 
-stargazer(m1, m2.0, m2, m2.1,  type="html", digits = 1,single.row=TRUE,  star.cutoffs = c(0.05, 0.01, 0.001), report = 'vcs*',
-          dep.var.labels=c("SES"), covariate.labels=c("Timepoint: highest vs. current","Education",
-                                                      "Age","Standardized income",   "Timepoint*education", 
-                                                      "Timepoint*age", "Timepoint*income",  "Healthy control (vs. attempter)", 
-                                                      "Depressed control (vs. attempter)", "Ideator (vs. attempter)", "Current addiction", 
-                                                      "Timepoint*Healthy control", "Timepoint*Depressed control", "Timepoint*Ideator", 
-                                                      "Timepoint*Current addiction"), out="ses_pretty.htm")
+# stargazer(m1, m2.0, m2, m2.1,  type="html", digits = 1,single.row=TRUE,  star.cutoffs = c(0.05, 0.01, 0.001), report = 'vcs*',
+#           dep.var.labels=c("SES"), covariate.labels=c("Timepoint: highest vs. current","Education",
+#                                                       "Age","Standardized income",   "Timepoint*education", 
+#                                                       "Timepoint*age", "Timepoint*income",  "Healthy control (vs. attempter)", 
+#                                                       "Depressed control (vs. attempter)", "Ideator (vs. attempter)", "Current addiction", 
+#                                                       "Timepoint*Healthy control", "Timepoint*Depressed control", "Timepoint*Ideator", 
+#                                                       "Timepoint*Current addiction"), out="ses_pretty.htm")
 
 stargazer(m10,m11, type="html", out="trans.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
 
