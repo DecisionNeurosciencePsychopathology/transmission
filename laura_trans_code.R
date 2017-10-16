@@ -1,6 +1,12 @@
-#install.packages(c("car","readr", "lme4", "ggplot2", "tidyr", "psych", "gdata", "xtable", "Hmisc", "nnet", 
-#"reshape2", "corrplot", "lsmeans", "readxl", "MASS", "stargazer", "compareGroups", "multcompView"))
 
+# hist(df$MOMMH)
+# describe(df$ENVRNMTL)
+# unique(df$ENVRNMTL)
+
+#install.packages(c("car","readr", "lme4", "ggplot2", "tidyr", "psych", "gdata", "xtable", "Hmisc", "nnet", 
+#"reshape2", "corrplot", "lsmeans", "readxl", "MASS", "stargazer", "compareGroups", "multcompView","RColorBrewer"))
+
+library(RColorBrewer)
 library(multcompView)
 library (car)
 library(readr)
@@ -25,7 +31,6 @@ library(readxl)
 library(MASS)
 library(stargazer)
 library(compareGroups)
-
 # library(lattice)
 # library(fastICA)
 # library(plotly)
@@ -35,37 +40,28 @@ library(compareGroups)
 #"\t", escape_double = FALSE, trim_ws = TRUE)
 #setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
 
-df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.csv",
-"\t", escape_double = FALSE, trim_ws = TRUE)
+#df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.csv",
+#"\t", escape_double = FALSE, trim_ws = TRUE)
 
 ## these are the old data before Laura's recoding of aunts and uncles into 2nd degree relatives
 # df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED.csv",
 # "\t", escape_double = FALSE, trim_ws = TRUE)
 
 
-setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
- 
-# View(df)
+#setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
+
 
 #at home
-# setwd("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission")
-# df <- read_delim("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
-#                  "\t", escape_double = FALSE, trim_ws = TRUE)
+ setwd("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission")
+ df <- read_delim("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
+                  "\t", escape_double = FALSE, trim_ws = TRUE)
+view(df)
+#names(df)
 
-names(df)
-
-# at work
-#df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
-#"\t", escape_double = FALSE, trim_ws = TRUE)
-
-View(df)
 
 # library(VIM)
 # df_aggr = aggr(df, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(df), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
 
-# hist(df$MOMMH)
-# describe(df$ENVRNMTL)
-# unique(df$ENVRNMTL)
 
 # designate factors
 
@@ -287,8 +283,10 @@ plot(ls11, horiz = F)
 ls11age <- lsmeans(m11, "sev", by = "BASELINEAGE", at = list(BASELINEAGE = c(40,60,80)))
 plot(ls11age, horiz = F)
 
-
 anova(m10,m11,test = "Rao")
+
+names(d)
+aggregate(d[,54], list(d$group_early), mean, na.rm= TRUE)
 
 
 # specifically test group*relation to rule out familial clustering: NS, does not improve fit
@@ -387,3 +385,54 @@ summary(tam1 <- lm(ARSTOTAL ~ group_early_no_break + BASELINEAGE + GENDERTEXT, d
 anova(tam1)
 plot(lsmeans(tam1, "group_early_no_break"))
 cld(lsmeans(tam1, "group_early_no_break"))
+
+
+#percentages/distributions for 10/17 presentation
+
+n_all <- table(df$group_early)
+
+a_1st <- table(df$group_early[df$num1stExposuresSA != 0])
+a_2nd <- table(df$group_early[df$num2ndExposuresSA != 0])
+a_rel <- table(df$group_early[df$num2ndExposuresSA != 0 | df$num1stExposuresSA != 0])
+a_env <- table(df$group_early[df$numEnvExposuresSA != 0])
+
+c_1st <- table(df$group_early[df$num1stExposuresSC != 0])
+c_2nd <- table(df$group_early[df$num2ndExposuresSC != 0])
+c_rel <- table(df$group_early[df$num2ndExposuresSC != 0 | df$num1stExposuresSC != 0])
+c_env <- table(df$group_early[df$numEnvExposuresSC != 0])
+
+ac_1st <- table(df$group_early[df$num1stExposuresSA != 0 | df$num1stExposuresSC != 0])
+ac_2nd <- table(df$group_early[df$num2ndExposuresSA != 0 | df$num2ndExposuresSC != 0])
+ac_env <- table(df$group_early[df$numEnvExposuresSA != 0 | df$numEnvExposuresSC != 0])
+
+
+na_1st <- table(df$num1stExposuresSA == 0)
+nc_1st <- table(df$num1stExposuresSC == 0)
+na_2nd <- table(df$num2ndExposuresSA == 0)
+
+nc_2nd <- table(df$num2ndExposuresSC == 0)
+na_env <- table(df$numEnvExposuresSA == 0)
+nc_env <- table(df$numEnvExposuresSC == 0)
+
+#as dataframes
+n_all <- data.frame(n_all)
+ac_1st <- data.frame(ac_1st)
+ac_2nd <- data.frame(ac_2nd)
+ac_env <- data.frame(ac_env)
+
+# running a pretty bar plot of descriptives
+dff <- cbind(n_all$Freq, ac_env$Freq, ac_1st$Freq, ac_2nd$Freq)
+dimnames(dff) <- list(Groups=c("Healthy","Depressed","Ideators","Early-onset", "Late-onset"),
+                      Exposures = c("Total group 'n'", "Non-relative exposures", "1st degree exposures", "2nd degree exposures"))
+dat <- as.table(dff)
+dat2 <- data.frame(dat)
+
+p <-
+  ggplot(dat2, aes(Groups, Freq)) +
+  theme(panel.grid = element_blank()) +
+  coord_cartesian(ylim = c(0, 85)) +
+  scale_fill_brewer(palette="PiYG") +
+  geom_bar(aes(fill = Exposures), stat="identity", position="dodge", width=.9)
+p
+#p + labs(title = "DSM personality traits", y = "mean score")
+
