@@ -55,7 +55,7 @@ library(compareGroups)
  setwd("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission")
  df <- read_delim("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
                   "\t", escape_double = FALSE, trim_ws = TRUE)
-view(df)
+View(df)
 #names(df)
 
 
@@ -304,15 +304,16 @@ summary(m12 <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  EDUCATION  
 car::Anova(m12, type = "III")
 # anova(m11,m12, test = "Rao")
 
-# stargazer(m1, m2.0, m2, m2.1,  type="html", digits = 1,single.row=TRUE,  star.cutoffs = c(0.05, 0.01, 0.001), report = 'vcs*',
-#           dep.var.labels=c("SES"), covariate.labels=c("Timepoint: highest vs. current","Education",
-#                                                       "Age","Standardized income",   "Timepoint*education", 
-#                                                       "Timepoint*age", "Timepoint*income",  "Healthy control (vs. attempter)", 
-#                                                       "Depressed control (vs. attempter)", "Ideator (vs. attempter)", "Current addiction", 
-#                                                       "Timepoint*Healthy control", "Timepoint*Depressed control", "Timepoint*Ideator", 
-#                                                       "Timepoint*Current addiction"), out="ses_pretty.htm")
 
 stargazer(m10,m11, type="html", out="trans.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
+stargazer(m10,m11, type="html", out="trans.labeled.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
+          dep.var.labels=c("Exposures"), covariate.labels=c("Depressed","Ideators","Early-onset Attempters","Late-onset Attempters", 
+                                                            "Exposure in a 2nd Degree Relative", "Exposure in the Environment", 
+                                                            "Suicide Severity (Attempt vs. Completion)", "Age", "Education", "Race", 
+                                                            "Depressed*2nd", "Ideator*2nd", "EoAttempter*2nd", "LoAttempter*2nd",
+                                                            "Depressed*Environment", "Ideator*Environment", "EoAttempter*Environment", 
+                                                            "LoAttempter*Environment", "2nd*Suicide Severity", "Environment*Suicide Severity",
+                                                            "Suicide Severity*Age"))
 
 #plot figure
 CLD <- multcomp::cld(ls11,
