@@ -6,6 +6,9 @@
 #install.packages(c("car","readr", "lme4", "ggplot2", "tidyr", "psych", "gdata", "xtable", "Hmisc", "nnet", 
 #"reshape2", "corrplot", "lsmeans", "readxl", "MASS", "stargazer", "compareGroups", "multcompView","RColorBrewer"))
 
+#install.packages("fifer")
+#library(fifer)
+
 library(RColorBrewer)
 library(multcompView)
 library (car)
@@ -168,7 +171,7 @@ histogram(~ simulated + actual)
 
 theta.resp <- theta.ml(na.omit(d1e$events), mean(na.omit(d1e$events)), length(d1e$events), limit = 50, eps = .Machine$double.eps^.25, trace = FALSE)
 
-
+#group12467, severity, relation; three way significant, no main effect of group
 summary(m1 <- glm(events ~  sev*rel*GROUP12467 + (1:ID), family = negative.binomial(theta = theta.resp), data = d))
 car::Anova(m1, type = "III")
 ls1 <- lsmeans(m1, "GROUP12467", by = "rel")
@@ -178,13 +181,14 @@ plot(ls1, horiz = F)
 lsmip(m1, sev ~ GROUP12467 | rel, ylab = "log(response rate)", xlab = "type ", type = "predicted" )
 lsmip(m1, GROUP12467 ~ rel | sev, ylab = "log(response rate)", xlab = "type ", type = "predicted" )
 
+#did not enter the three way interaction, did two ways separately. severity by group interaction is interesting, all groups exposed to more att than comp except LL
 summary(m2 <- glm(events ~  sev*GROUP12467 + rel*GROUP12467 + (1:ID), family = negative.binomial(theta = theta.resp), data = d))
 car::Anova(m2, type = "III")
 lsmip(m2, GROUP12467 ~ sev, ylab = "log(event rate)", xlab = "type ", type = "predicted" )
 ls2 <- lsmeans(m2, "GROUP12467", by = "sev")
 plot(ls2, horiz = F)
 
-
+#difference in exposure to attempts (not SC) by group
 theta.ed <- theta.ml(na.omit(d$events), mean(na.omit(d$events)), length(d$events), limit = 50, eps = .Machine$double.eps^.25, trace = FALSE)
 summary(m3 <- glm(events ~  sev*GROUP12467*blood + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 car::Anova(m3, type = "III")
@@ -192,7 +196,7 @@ lsmip(m3, sev ~ GROUP12467 | blood , ylab = "log(response rate)", xlab = "type "
 ls3 <- lsmeans(m3, "GROUP12467", by = "blood")
 plot(ls3, horiz = F)
 
-# demographics
+# demographics- adding in age
 summary(m3a <- glm(events ~  GROUP12467  + BASELINEAGE*sev*blood + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 car::Anova(m3a, type = "III")
 ls3a <- lsmeans(m3a, "BASELINEAGE", by = "sev", at = list(BASELINEAGE=c(50,65,80)))
@@ -279,9 +283,13 @@ summary(m11 <- glm(exp ~  group_early + rel*sev + BASELINEAGE*sev +  EDUCATION  
 car::Anova(m11, type = "III")
 ls11 <- lsmeans(m11, "group_early")
 plot(ls11, horiz = F)
-# evaluate interaction
+# evaluate interaction- older people, less attempts
 ls11age <- lsmeans(m11, "sev", by = "BASELINEAGE", at = list(BASELINEAGE = c(40,60,80)))
 plot(ls11age, horiz = F)
+# evaluate interaction- environment, more completions
+ls11env <- lsmeans(m11, "sev", by = "rel")
+plot(ls11env, horiz = F)
+
 
 anova(m10,m11,test = "Rao")
 
@@ -361,12 +369,29 @@ dev.off()
 
 
 # get group characteristics and make Table 1
-chars <- df[,c(2,7,8,9,10, 18,40,42, 14,11, 17)]
+chars <- df[,c(2,7,8,9,10,18,40,42,14,11,17)]
 # describe.by(chars,group = df$group_early_no_break)
 c <- compareGroups(chars,df$group_early_no_break)
 createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1)
 export2html(createTable(c), "Table1.html")
 
+# playing with Table 1
+chars <- df[,c(2,7,8,9,10,18,40,42,14,11,17,106)]
+# describe.by(chars,group = df$group_early_no_break)
+c <- compareGroups(chars,df$group_early_no_break)
+tc <- createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1, show.p.mul = TRUE)
+tc
+export2html(tc, "Table1.expanded.html")
+
+# playing with Table 1b
+chars2 <- df[,c(7,8,10)]
+chars2
+# describe.by(chars2,group = df$group_early_no_break)
+c2 <- compareGroups(chars2,df$group_early_no_break)
+tc2 <- createTable(c2,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1)
+tc2
+export2html(tc2, "Table1.condensed.html")
+chisq.post.hoc(tc2, test = c("fisher.test"), popsInRows = TRUE, control = c("fdr", "BH", "BY", "bonferroni", "holm", "hochberg", "hommel"), digits = 1)
 
 # more comparisons of early vs late for a possible future paper
 chars <- df[df$GROUP1245==5,c(19:37)]
