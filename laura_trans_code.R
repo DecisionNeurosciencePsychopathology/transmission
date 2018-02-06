@@ -53,17 +53,30 @@ library(compareGroups)
 
 #setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
 
+#For Anna:
+setwd("~/Dropbox/USA/Pittsburgh/GitHub/transmission/transmission")
+df <- read_delim("FAMHX_DEMOG_COUNTS_MERGED_10.4.17.csv",
+                 ",", escape_double = FALSE, trim_ws = TRUE)
+
 
 #at home
- setwd("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission")
- df <- read_delim("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
+setwd("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission")
+df <- read_delim("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
                   "\t", escape_double = FALSE, trim_ws = TRUE)
 View(df)
-#names(df)
+names(df)
 
 
+load("trans.Rda")
 # library(VIM)
 # df_aggr = aggr(df, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(df), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
+
+#checking missingness
+library(mice)
+md.pattern(df)
+
+library(VIM)
+df_aggr = aggr(df, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(df), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
 
 
 # designate factors
@@ -152,6 +165,7 @@ d$blood[d$relation=="numEnvExposuresSC" | d$relation=="numEnvExposuresSA"] <- "n
 
 d1e <- d[d$rel=="1st" | d$rel=="ENV",]
 
+save(df, file="trans.Rda")
 
 ## check if distribution of events roughly fits NB
 
@@ -199,8 +213,10 @@ plot(ls3, horiz = F)
 # demographics- adding in age
 summary(m3a <- glm(events ~  GROUP12467  + BASELINEAGE*sev*blood + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 car::Anova(m3a, type = "III")
-ls3a <- lsmeans(m3a, "BASELINEAGE", by = "sev", at = list(BASELINEAGE=c(50,65,80)))
+ls3a <- lsmeans(m3a, "BASELINEAGE", by = c("sev", at = list(BASELINEAGE=c(50,65,80))))
 plot(ls3a, horiz = F)
+ls3a.2 <- lsmeans(m3a.2, "BASELINEAGE", by = c("sev", "blood"), at = list(BASELINEAGE=c(50,65,80)))
+
 
 summary(m3a1 <- glm(events ~  GROUP12467  + BASELINEAGE*sev*blood + EDUCATION  + race + AGEDEPONSET + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 car::Anova(m3a1, type = "III")
@@ -261,6 +277,17 @@ multcomp::cld(ls8)
 # exclude healthy controls
 dd <- d[d$GROUP1245 != "1",]
 
+
+#show that the three-way interaction was only significant because of healthy controls
+summary(m6.no_healthy <- glm(events ~  group_early*sev*blood  + BASELINEAGE*sev +  EDUCATION  + race  + (1:ID), family = negative.binomial(theta = theta.ed), data = dd))
+car::Anova(m6.no_healthy, type = "III")
+ls6 <- lsmeans(m6.no_healthy, "group_early", by = (c("sev","blood")))
+plot(ls6)
+ls6a <- lsmeans(m6.no_healthy, "group_early")
+plot(ls6a)
+multcomp::cld(ls6a)
+
+
 # dichotomize exposure
 d$exp <- d$events>0
 summary(m9 <- glm(exp ~  group_early*sev +group_early*blood + BASELINEAGE*sev +  EDUCATION  + race  + (1:ID), family = binomial, data = d))
@@ -270,28 +297,65 @@ ls9 <- lsmeans(m9, "group_early", by = "blood")
 plot(ls9, horiz = F)
 multcomp::cld(ls9)
 
+
 summary(m10 <- glm(exp ~  group_early*rel + rel*sev + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
 car::Anova(m10, type = "III")
+ls10 <- lsmeans(m10, "group_early")
+contrast(ls10, method = "pairwise", adjust ="tukey")
+plot(ls10, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
+
 # do not worry about this interaction plot -- just did it to rule out familial clustering once and for all
-ls10 <- lsmeans(m10, "group_early", by = "rel")
-plot(ls10, horiz = F)
-multcomp::cld(ls10)
+ls10a <- lsmeans(m10, "group_early", by = "rel")
+plot(ls10a, horiz = F)
+multcomp::cld(ls10a)
+
+ls10b <- lsmeans(m10, "sev", by = "rel")
+plot(ls10b, horiz = F)
+multcomp::cld(ls10b)
+
+
+ls10c <- lsmeans(m10, "BASELINEAGE", by = "sev", at = list(BASELINEAGE = c(40,60,80)))
+plot(ls10c, horiz = F)
+multcomp::cld(ls10c)
+
+ls10d <- lsmeans(m10, "race")
+plot(ls10d, horiz = F)
+multcomp::cld(ls10d)
+
 anova(m9,m10,test = "Rao")
 
 
 summary(m11 <- glm(exp ~  group_early + rel*sev + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
-car::Anova(m11, type = "III")
+car::Anova(m11, type = "III", test.statistic = c("F"))
 ls11 <- lsmeans(m11, "group_early")
+multcomp::cld(ls11)
 plot(ls11, horiz = F)
+contrast(ls11, method = "pairwise", adjust ="tukey")
+
+
 # evaluate interaction- older people, less attempts
 ls11age <- lsmeans(m11, "sev", by = "BASELINEAGE", at = list(BASELINEAGE = c(40,60,80)))
 plot(ls11age, horiz = F)
+multcomp::cld(ls11age)
+
+
 # evaluate interaction- environment, more completions
 ls11env <- lsmeans(m11, "sev", by = "rel")
 plot(ls11env, horiz = F)
+multcomp::cld(ls11env)
 
 
-anova(m10,m11,test = "Rao")
+anova(m11,m11b,test = "Rao")
+
+#checking if we have a good reason to keep education in there.
+summary(m11b <- glm(exp ~  group_early + rel*sev + BASELINEAGE*sev +  race + (1:ID), family = binomial, data = d))
+car::Anova(m11b, type = "III")
+ls11b <- lsmeans(m11b, "group_early")
+plot(ls11b, horiz = F)
+
+
+anova(m11,m11b,test = "Rao")
+
 
 names(d)
 aggregate(d[,54], list(d$group_early), mean, na.rm= TRUE)
@@ -300,7 +364,21 @@ aggregate(d[,54], list(d$group_early), mean, na.rm= TRUE)
 # specifically test group*relation to rule out familial clustering: NS, does not improve fit
 summary(m11a <- glm(exp ~  group_early*sev*rel + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
 car::Anova(m11a, type = "III")
+
 anova(m11,m11a, test = "Rao")
+
+ls11a2 <- lsmeans(m11a, "group_early", by = c("rel","sev"))
+plot(ls11a2)
+
+#since plot does not work, try without HC group
+dd$exp <- dd$events>0
+
+summary(m11_noHealthy <- glm(exp ~  group_early*sev*rel + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = dd))
+car::Anova(m11_noHealthy, type = "III")
+anova(m11,m11_noHealthy, test = "Rao")
+
+ls11a2_noHealthy <- lsmeans(m11_noHealthy, "group_early", by = c("rel","sev"))
+plot(ls11a2_noHealthy)
 
 # plot NS interaction for qualitative look:  still a problem with 2nd degree
 ls11a <- lsmeans(m11a, "group_early", by = "rel")
@@ -310,14 +388,18 @@ plot(ls11a)
 # test substance and anxiety -- not significant
 summary(m12 <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  EDUCATION  + race + SubstanceLifetime + AnxietyLifetime + (1:ID), family = binomial, data = d))
 car::Anova(m12, type = "III")
-# anova(m11,m12, test = "Rao")
+
+summary(m12a <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  race + SubstanceLifetime + AnxietyLifetime + (1:ID), family = binomial, data = d))
+car::Anova(m12a, type = "III")
+
+anova(m11b,m12, test = "Rao")
 
 
 stargazer(m10,m11, type="html", out="trans.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
-stargazer(m10,m11, type="html", out="trans.labeled.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
+stargazer(m11, m10, type="html", out="trans.labeled.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
           dep.var.labels=c("Exposures"), covariate.labels=c("Depressed","Ideators","Early-onset Attempters","Late-onset Attempters", 
-                                                            "Exposure in a 2nd Degree Relative", "Exposure in the Environment", 
-                                                            "Suicide Severity (Attempt vs. Completion)", "Age", "Education", "Race", 
+                                                            "Relationship: 2nd Degree Relative", "Relationship: environment", 
+                                                            "Suicide Severity (Completion)", "Age", "Education", "Race", 
                                                             "Depressed*2nd", "Ideator*2nd", "EoAttempter*2nd", "LoAttempter*2nd",
                                                             "Depressed*Environment", "Ideator*Environment", "EoAttempter*Environment", 
                                                             "LoAttempter*Environment", "2nd*Suicide Severity", "Environment*Suicide Severity",
@@ -387,7 +469,7 @@ export2html(tc, "Table1.expanded.html")
 chars2 <- df[,c(7,8,10)]
 chars2
 # describe.by(chars2,group = df$group_early_no_break)
-c2 <- compareGroups(chars2,df$group_early_no_break)
+tc2 <- compareGroups(chars2,df$group_early_no_break)
 tc2 <- createTable(c2,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1)
 tc2
 export2html(tc2, "Table1.condensed.html")
