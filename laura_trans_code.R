@@ -117,10 +117,43 @@ df$firstdegSB <- df$firstdegSA
 
 df$firstdegSC <- as.factor(df$firstdegSC)
 
+df$bloodSB<-0
+df$bloodSB[df$firstdegSB==1|df$seconddegSB==1]<-1
+df$bloodSB[is.na(df$firstdegSB)|is.na(df$seconddegSB)]<-"NA"
+View(df$bloodSB)
+
 df$race <- "NA"
 df$race[df$RACETEXT=="WHITE"] <- 0
 #minority are 1
 df$race[df$RACETEXT=="AFRICAN AMERICAN" | df$RACETEXT == "ASIAN PACIFIC"] <- 1
+
+#familial affective disorders
+df$firstdegaffective <- 0
+df$firstdegaffective[df$MOMMH=="B" | df$MOMMH=="b" |df$MOMMH == "C"|df$MOMMH == "c" | 
+                  df$DADMH=="B" | df$DADMH=="b" |df$DADMH == "C"|df$DADMH == "c" |
+                  df$SIBMH=="B" | df$SIBMH=="b" |df$SIBMH == "C"|df$SIBMH == "c"] <- 1
+df$firstdegaffective
+
+#familial substance misuse
+df$firstdegsubstance <- 0
+df$firstdegsubstance[df$MOMMH=="E" | df$MOMMH=="e"|df$DADMH=="E" | df$DADMH=="e"|df$SIBMH=="E" | df$SIBMH=="e"] <- 1
+df$firstdegsubstance
+
+#souse affective disorder
+df$spouseaffective <- 0
+df$spouseaffective[df$SPOUSEMH=="B" | df$SPOUSEMH=="b" |df$SPOUSEMH == "C"|df$SPOUSEMH == "c"] <- 1
+df$spouseaffective
+
+#spouse substabce misuse
+df$spousesubstance <- 0
+df$spousesubstance[df$SPOUSEMH=="E" | df$SPOUSEMH=="e"] <- 1
+df$spousesubstance
+
+#marital status, binary; partenered=1, single=0
+df$MARITALTEXT
+df$marital2lvl<-0
+df$marital2lvl[df$MARITALTEXT=="MARRIED"|df$MARITALTEXT=="CO-HABITATING"]<-1
+df$marital2lvl
 
 # get counts of suicide attempts by relation cagetory
 
@@ -162,6 +195,9 @@ d$blood <- NA
 d$blood[d$relation == "num1stExposuresSC" | d$relation == "num1stExposuresSA" | d$relation=="num2ndExposuresSC" | d$relation=="num2ndExposuresSA"] <- "rel"
 d$blood[d$relation=="numEnvExposuresSC" | d$relation=="numEnvExposuresSA"] <- "nonrel"
 
+##making sure blood has levels-- why don't they appear with the levels function?
+levels(d$blood)
+barchart(d$blood)
 
 d1e <- d[d$rel=="1st" | d$rel=="ENV",]
 
@@ -304,6 +340,7 @@ ls10 <- lsmeans(m10, "group_early")
 contrast(ls10, method = "pairwise", adjust ="tukey")
 plot(ls10, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
 
+
 # do not worry about this interaction plot -- just did it to rule out familial clustering once and for all
 ls10a <- lsmeans(m10, "group_early", by = "rel")
 plot(ls10a, horiz = F)
@@ -322,7 +359,25 @@ ls10d <- lsmeans(m10, "race")
 plot(ls10d, horiz = F)
 multcomp::cld(ls10d)
 
+
 anova(m9,m10,test = "Rao")
+
+# dichotomize blood into yes SB in a blood rel v no SB in a blood rel
+d$bloodyn <- d$blood=="rel"
+barchart(d$bloodyn)
+
+summary(m10a <- glm(exp ~  group_early*bloodyn + bloodyn*sev + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
+car::Anova(m10a, type = "III")
+ls10e <- lsmeans(m10a, "group_early")
+contrast(ls10e, method = "pairwise", adjust ="tukey")
+plot(ls10e, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
+
+anova(m10a,m10,test="Rao")
+
+# evaluate interaction- nonrel, more completions- not the yn model interaction
+ls10aBlood <- lsmeans(m10a, "sev", by = "blood")
+plot(ls10aBlood, horiz = F)
+multcomp::cld(ls10aBlood)
 
 
 summary(m11 <- glm(exp ~  group_early + rel*sev + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
@@ -394,9 +449,9 @@ car::Anova(m12a, type = "III")
 
 anova(m11b,m12, test = "Rao")
 
-
+stargazer(m10a,m10, type="html", out="trans.blood.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
 stargazer(m10,m11, type="html", out="trans.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
-stargazer(m11, m10, type="html", out="trans.labeled.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
+stargazer(m10, m11, type="html", out="trans.labeled.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
           dep.var.labels=c("Exposures"), covariate.labels=c("Depressed","Ideators","Early-onset Attempters","Late-onset Attempters", 
                                                             "Relationship: 2nd Degree Relative", "Relationship: environment", 
                                                             "Suicide Severity (Completion)", "Age", "Education", "Race", 
@@ -448,7 +503,9 @@ ggplot(CLD,
              nudge_y = c(0.8,  0.8, 0.8,  0.8, 0.8),
              color   = "black")
 dev.off()
-
+ 
+names(df)
+ 
 
 # get group characteristics and make Table 1
 chars <- df[,c(2,7,8,9,10,18,40,42,14,11,17)]
@@ -462,18 +519,19 @@ chars <- df[,c(2,7,8,9,10,18,40,42,14,11,17,106)]
 # describe.by(chars,group = df$group_early_no_break)
 c <- compareGroups(chars,df$group_early_no_break)
 tc <- createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1, show.p.mul = TRUE)
-tc
 export2html(tc, "Table1.expanded.html")
 
-# playing with Table 1b
-chars2 <- df[,c(7,8,10)]
-chars2
-# describe.by(chars2,group = df$group_early_no_break)
-tc2 <- compareGroups(chars2,df$group_early_no_break)
-tc2 <- createTable(c2,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1)
-tc2
-export2html(tc2, "Table1.condensed.html")
-chisq.post.hoc(tc2, test = c("fisher.test"), popsInRows = TRUE, control = c("fdr", "BH", "BY", "bonferroni", "holm", "hochberg", "hommel"), digits = 1)
+# playing with Table 1- adding the variables Kati suggested
+chars <- df[,c(2,7,8,9,10,18,40,42,14,11,17,106,25,28,13,94,119,124,125,126,127,128,129)]
+# describe.by(chars,group = df$group_early_no_break)
+c <- compareGroups(chars,df$group_early_no_break)
+tc2 <- createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1, 
+                   show.p.mul = TRUE, show.ratio = TRUE)
+export2html(tc2, "Table1.kati.html")
+
+names(chars)
+names(df)
+
 
 # more comparisons of early vs late for a possible future paper
 chars <- df[df$GROUP1245==5,c(19:37)]
@@ -544,3 +602,4 @@ p <-
 p
 #p + labs(title = "DSM personality traits", y = "mean score")
 
+c
