@@ -114,18 +114,20 @@ df$seconddegSB[df$GPATT=="b" | df$GPATT=="c" |df$HALFSIBATT == "b"|df$HALFSIBATT
 df$seconddegSB[is.na(df$GPATT) | is.na(df$GPATT)| is.na(df$HALFSIBATT)  | is.na(df$HALFSIBATT) | is.na(df$GCATT) | is.na(df$GCATT)] <- "NA"
 
 df$firstdegSB <- df$firstdegSA
-
+df$firstdegSA <- as.factor(df$firstdegSA)
+df$firstdegSB <- as.factor(df$firstdegSB)
 df$firstdegSC <- as.factor(df$firstdegSC)
+
 
 df$bloodSB<-0
 df$bloodSB[df$firstdegSB==1|df$seconddegSB==1]<-1
 df$bloodSB[is.na(df$firstdegSB)|is.na(df$seconddegSB)]<-"NA"
 View(df$bloodSB)
 
-df$race <- "NA"
-df$race[df$RACETEXT=="WHITE"] <- 0
+df$race2lvl <- "NA"
+df$race2lvl[df$RACETEXT=="WHITE"] <- 0
 #minority are 1
-df$race[df$RACETEXT=="AFRICAN AMERICAN" | df$RACETEXT == "ASIAN PACIFIC"] <- 1
+df$race2lvl[df$RACETEXT=="AFRICAN AMERICAN" | df$RACETEXT == "ASIAN PACIFIC"] <- 1
 
 #familial affective disorders
 df$firstdegaffective <- 0
@@ -179,6 +181,11 @@ df <- as.data.frame(df)
 
 d = melt(df, na.rm = FALSE, measure.vars = c("num1stExposuresSC","num1stExposuresSA", "num2ndExposuresSC", "num2ndExposuresSA", "numEnvExposuresSC", "numEnvExposuresSA"))
 
+d$group_early <- relevel(d$group_early, ref = c("Non-suicidal\ndepressed"))
+
+# resetting the group order for the figures
+# d$group_early <- factor(d$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
+
 # discard the stupid variables
 
 d <- d[,c(1:45,113:ncol(d))]
@@ -196,6 +203,10 @@ d$blood[d$relation == "num1stExposuresSC" | d$relation == "num1stExposuresSA" | 
 d$blood[d$relation=="numEnvExposuresSC" | d$relation=="numEnvExposuresSA"] <- "nonrel"
 
 d1e <- d[d$rel=="1st" | d$rel=="ENV",]
+
+
+df$BIS_TOT<-rowSums(df[,c("BIS_NONPLAN","BIS_COGNIT","BIS_MOTOR")], na.rm = TRUE)
+df$BIS_TOT
 
 save(df, file="trans.Rda")
 
@@ -447,14 +458,14 @@ car::Anova(m12a, type = "III")
 
 anova(m11b,m12, test = "Rao")
 
-stargazer(m10,m10blood, type="html", out="trans.blood.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-          dep.var.labels=c("Exposures"), covariate.labels=c("Depressed","Ideators","Early-onset Attempters","Late-onset Attempters", 
-                                                  "Relationship: 2nd Degree Relative", "Relationship: environment", 
-                                                  "Suicide Severity (Completion)", "Age", "Education", "Race", 
-                                                  "Depressed*2nd", "Ideator*2nd", "EoAttempter*2nd", "LoAttempter*2nd",
-                                                  "Depressed*Environment", "Ideator*Environment", "EoAttempter*Environment", 
-                                                  "LoAttempter*Environment", "2nd*Suicide Severity", "Environment*Suicide Severity",
-                                                  "Suicide Severity*Age"))
+stargazer(m10,m10blood, type="html", out="trans.blood.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
+         # dep.var.labels=c("Exposures"), covariate.labels=c("Non-psychiatric Controls","Ideators","Early-onset Attempters","Late-onset Attempters", 
+         #                                          "Relationship: 2nd Degree Relative", "Relationship: environment", 
+         #                                          "Suicide Severity (Completion)", "Age", "Education", "Race", 
+         #                                          "Depressed*2nd", "Ideator*2nd", "EoAttempter*2nd", "LoAttempter*2nd",
+         #                                          "Depressed*Environment", "Ideator*Environment", "EoAttempter*Environment", 
+         #                                          "LoAttempter*Environment", "2nd*Suicide Severity", "Environment*Suicide Severity",
+         #                                          "Suicide Severity*Age"))
 
 
 stargazer(m10, m11, type="html", out="trans.labeled.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
@@ -472,6 +483,11 @@ stargazer(m10, m11, type="html", out="trans.labeled.htm", digits = 2,single.row=
 df <- as.data.frame(df)
 
 dblood = melt(df, na.rm = FALSE, measure.vars = c("num1stExposuresSC","num1stExposuresSA", "num2ndExposuresSC", "num2ndExposuresSA"))
+
+dblood$group_early <- relevel(dblood$group_early, ref = "Non-suicidal\ndepressed")
+
+#resetting group order
+#dblood$group_early <- factor(dblood$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
 
 # discard the stupid variables
 
@@ -509,6 +525,7 @@ theta.resp <- theta.ml(na.omit(dblood1e$events), mean(na.omit(dblood1e$events)),
 #dichotomize exposure in dblood
 dblood$exp <- dblood$events>0
 
+#THIS ONE
 summary(m10blood <- glm(exp ~  group_early + sev + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = dblood))
 car::Anova(m10blood, type = "III")
 ls10blood <- lsmeans(m10blood, "group_early")
@@ -533,10 +550,54 @@ CLD <- multcomp::cld(ls10,
                      Letters=letters,
                      adjust="tukey")
 CLD$.group=gsub(" ", "", CLD$.group)
+
 # CLD$g=c("Non-psychiatric controls", "Non-suicidal depressed", "Suicide ideators", "Early-onset attempters", "Late-onset attempters")
 
-
-pdf(file = "Exposure by group PRETTY.m10.pdf", width = 8, height = 6)
+#plot figure m10,10blood merged
+CLD_blood <- multcomp::cld(ls10blood,
+                           alpha=0.05,
+                           Letters=letters,
+                           adjust="tukey")
+CLD_blood$.group=gsub(" ", "", CLD_blood$.group)
+View(CLD_all)
+CLD_all <- rbind(CLD, CLD_blood)
+CLD_all$models <- c(rep("any exposure",5), rep("family exposure", 5))
+pdf(file = "Merged_Figure.pdf", width = 8, height = 6)
+pd = position_dodge(0.8)    ### How much to jitter the points on the plot
+ggplot(CLD_all,
+       aes(x     = group_early,
+           y     = lsmean,
+           label = .group,
+           col = models)) +
+  xlab(NULL) +
+  geom_point(shape  = 15,
+             size   = 4,
+             position = pd) +
+  geom_errorbar(aes(ymin  =  asymp.LCL,
+                    ymax  =  asymp.UCL),
+                width =  0.2,
+                size  =  0.7,
+                position = pd) +
+  theme_classic() +
+  theme(axis.title   = element_text(face = "bold"),
+        axis.text    = element_text(face = "bold"),
+        plot.caption = element_text(hjust = 0)) +
+  ylab("Least square log probability of suicidal behavior among family or friends \nLower prevalence   <-   ->   Higher prevalence") +
+  ggtitle ("Occurrence of suicidal behavior among family or friends by group",
+           subtitle = "Binary logistic mixed-effects model") +
+  labs(caption  = paste0("\n",
+                         "Boxes indicate the LS mean log probability.\n",
+                         "Error bars indicate the 95% ",
+                         "confidence interval of the LS mean. \n",
+                         "Means sharing a letter are ",
+                         "not significantly different ",
+                         "(Tukey-adjusted comparisons)."),
+       hjust=0.5) +
+  geom_text(nudge_x = c(0.1, -0.1, 0.1, -0.1, 0.1),
+            nudge_y = c(0.8,  0.8, 0.8,  0.8, 0.8),
+            color   = "black")
+dev.off()
+pdf(file = "Exposure by group PRETTY.m10and10blood.pdf", width = 8, height = 6)
 pd = position_dodge(0.8)    ### How much to jitter the points on the plot
 ggplot(CLD,
        aes(x     = group_early,
@@ -572,14 +633,12 @@ ggplot(CLD,
 dev.off()
 
 #plot figure m10blood
-CLD <- multcomp::cld(ls11,
+CLD_blood <- multcomp::cld(ls10blood,
                      alpha=0.05,
                      Letters=letters,
                      adjust="tukey")
-CLD$.group=gsub(" ", "", CLD$.group)
+CLD_blood$.group=gsub(" ", "", CLD_blood$.group)
 # CLD$g=c("Non-psychiatric controls", "Non-suicidal depressed", "Suicide ideators", "Early-onset attempters", "Late-onset attempters")
-
-
 pdf(file = "Exposure by group PRETTY.m10blood.pdf", width = 8, height = 6)
 pd = position_dodge(0.8)    ### How much to jitter the points on the plot
 ggplot(CLD,
@@ -623,8 +682,6 @@ CLD <- multcomp::cld(ls11,
                      adjust="tukey")
 CLD$.group=gsub(" ", "", CLD$.group)
 # CLD$g=c("Non-psychiatric controls", "Non-suicidal depressed", "Suicide ideators", "Early-onset attempters", "Late-onset attempters")
-
-
 pdf(file = "Exposure by group PRETTY.m11.pdf", width = 8, height = 6)
 pd = position_dodge(0.8)    ### How much to jitter the points on the plot
 ggplot(CLD,
@@ -662,22 +719,9 @@ dev.off()
  
 #names(df)
 #View(df)
-# get group characteristics and make Table 1
-chars <- df[,c(2,7,8,9,10,18,40,42,14,11,17)]
-# describe.by(chars,group = df$group_early_no_break)
-c <- compareGroups(chars,df$group_early_no_break)
-createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1)
-export2html(createTable(c), "Table1.html")
-
-# playing with Table 1
-chars <- df[,c(2,7,8,9,10,18,40,42,14,11,17,106)]
-# describe.by(chars,group = df$group_early_no_break)
-c <- compareGroups(chars,df$group_early_no_break)
-tc <- createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1, show.p.mul = TRUE)
-export2html(tc, "Table1.expanded.html")
 
 # playing with Table 1- adding the variables Kati suggested
-chars <- df[,c(2,7,8,9,10,18,40,42,14,11,17,106,25,28,13,94,119,124,125,126,127,128,129)]
+chars <- df[,c(2,7,121,9,126,18,40,42,25,131,13,14,11,17,94,120,122,123,124)]
 # describe.by(chars,group = df$group_early_no_break)
 c <- compareGroups(chars,df$group_early_no_break)
 tc2 <- createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1, 
@@ -686,6 +730,8 @@ export2html(tc2, "Table1.kati.html")
 
 names(chars)
 names(df)
+
+
 
 
 # more comparisons of early vs late for a possible future paper
