@@ -60,14 +60,22 @@ df <- read_delim("FAMHX_DEMOG_COUNTS_MERGED_10.4.17.csv",
 
 
 #at home
-setwd("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission")
 df <- read_delim("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
                   "\t", escape_double = FALSE, trim_ws = TRUE)
+
+#For Alex:
+setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
+
+
+df <- read_delim("FAMHX_DEMOG_COUNTS_MERGED_10.4.17.csv",
+                 "\t", escape_double = FALSE, trim_ws = TRUE)
+
+
 View(df)
 names(df)
 
 
-load("trans.Rda")
+# load("trans.Rda")
 # library(VIM)
 # df_aggr = aggr(df, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(df), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
 
@@ -261,10 +269,10 @@ plot(ls3a, horiz = F)
 ls3a.2 <- lsmeans(m3a.2, "BASELINEAGE", by = c("sev", "blood"), at = list(BASELINEAGE=c(50,65,80)))
 
 
-summary(m3a1 <- glm(events ~  GROUP12467  + BASELINEAGE*sev*blood + EDUCATION  + race + AGEDEPONSET + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+summary(m3a1 <- glm(events ~  GROUP12467  + BASELINEAGE*sev*blood + EDUCATION  + race2lvl + AGEDEPONSET + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 car::Anova(m3a1, type = "III")
 
-summary(m3a2 <- glm(events ~  GROUP12467  + BASELINEAGE*sev*blood + EDUCATION  + race + PTSDLifetime + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+summary(m3a2 <- glm(events ~  GROUP12467  + BASELINEAGE*sev*blood + EDUCATION  + race2lvl + PTSDLifetime + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 car::Anova(m3a2, type = "III")
 
 
@@ -282,7 +290,7 @@ car::Anova(m3c, type = "III")
 summary(m4 <- glm(events ~   GROUP1245 + BASELINEAGE*sev*blood + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 car::Anova(m4, type = "III")
 
-summary(m5 <- glm(events ~  GROUP1245  + BASELINEAGE*sev*blood + EDUCATION  + race + PTSDLifetime + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+summary(m5 <- glm(events ~  GROUP1245  + BASELINEAGE*sev*blood + EDUCATION  + race2lvl + PTSDLifetime + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 car::Anova(m5, type = "III")
 ls5 <- lsmeans(m5, "GROUP1245")
 plot(ls5, horiz = F)
@@ -293,7 +301,7 @@ multcomp::cld(ls5)
 # d$group_v_early[d$AGEATFIRSTATTEMPT<25] <- "EARLY_ATTEMPT"
 
 
-summary(m6 <- glm(events ~  group_early*sev*blood  + BASELINEAGE*sev +  EDUCATION  + race  + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+summary(m6 <- glm(events ~  group_early*sev*blood  + BASELINEAGE*sev +  EDUCATION  + race2lvl  + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 car::Anova(m6, type = "III")
 ls6 <- lsmeans(m6, "group_early", by = (c("sev","blood")))
 plot(ls6)
@@ -302,7 +310,7 @@ plot(ls6a)
 multcomp::cld(ls6a)
 
 
-# summary(m7 <- glm(events ~  group_v_early*sev*blood  + BASELINEAGE*sev +  EDUCATION  + race + PTSDLifetime + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
+# summary(m7 <- glm(events ~  group_v_early*sev*blood  + BASELINEAGE*sev +  EDUCATION  + race2lvl + PTSDLifetime + (1:ID), family = negative.binomial(theta = theta.ed), data = d))
 # car::Anova(m7, type = "III")
 # ls7 <- lsmeans(m7, "group_v_early", by = (c("sev","blood")))
 # plot(ls7)
@@ -311,7 +319,7 @@ multcomp::cld(ls6a)
 # multcomp::cld(ls7a)
 
 
-summary(m8 <- glm(events ~  group_early + blood  + BASELINEAGE +  EDUCATION  + race  + (1:ID), family = negative.binomial(theta = theta.ed), data = d[d$sev=="suicide",]))
+summary(m8 <- glm(events ~  group_early + blood  + BASELINEAGE +  EDUCATION  + race2lvl  + (1:ID), family = negative.binomial(theta = theta.ed), data = d[d$sev=="suicide",]))
 car::Anova(m8, type = "III")
 ls8 <- lsmeans(m8, "group_early")
 plot(ls8)
@@ -322,7 +330,7 @@ dd <- d[d$GROUP1245 != "1",]
 
 
 #show that the three-way interaction was only significant because of healthy controls
-summary(m6.no_healthy <- glm(events ~  group_early*sev*blood  + BASELINEAGE*sev +  EDUCATION  + race  + (1:ID), family = negative.binomial(theta = theta.ed), data = dd))
+summary(m6.no_healthy <- glm(events ~  group_early*sev*blood  + BASELINEAGE*sev +  EDUCATION  + race2lvl  + (1:ID), family = negative.binomial(theta = theta.ed), data = dd))
 car::Anova(m6.no_healthy, type = "III")
 ls6 <- lsmeans(m6.no_healthy, "group_early", by = (c("sev","blood")))
 plot(ls6)
@@ -333,7 +341,7 @@ multcomp::cld(ls6a)
 
 # dichotomize exposure
 d$exp <- d$events>0
-summary(m9 <- glm(exp ~  group_early*sev +group_early*blood + BASELINEAGE*sev +  EDUCATION  + race  + (1:ID), family = binomial, data = d))
+summary(m9 <- glm(exp ~  group_early*sev +group_early*blood + BASELINEAGE*sev +  EDUCATION  + race2lvl  + (1:ID), family = binomial, data = d))
 car::Anova(m9, type = "III")
 lsmip(m9,  sev ~ group_early |blood, ylab = "log(response rate)", xlab = "type ", type = "predicted" )
 ls9 <- lsmeans(m9, "group_early", by = "blood")
@@ -344,11 +352,19 @@ multcomp::cld(ls9)
 ##FINAL MODEL WITH ENV
 d$rel <- factor(d$rel)
 d$rel <- relevel(d$rel, ref = 'ENV')
-summary(m10 <- glm(exp ~  group_early*rel + rel*sev + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
+summary(m10 <- glm(exp ~  group_early*rel + rel*sev + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = d))
 car::Anova(m10, type = "III")
 ls10 <- lsmeans(m10, "group_early")
 contrast(ls10, method = "pairwise", adjust ="tukey")
 plot(ls10, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
+
+ls10rel <- lsmeans(m10, "group_early", by = "rel")
+
+CLD_rel <- multcomp::cld(ls10rel,
+                           alpha=0.05,
+                           Letters=letters,
+                           adjust="tukey")
+CLD_rel$.group=gsub(" ", "", CLD_rel$.group)
 
 
 # do not worry about this interaction plot -- just did it to rule out familial clustering once and for all
@@ -367,7 +383,7 @@ plot(ls10c, horiz = F)
 multcomp::cld(ls10c)
 
 # evaluate main effect- caucasions, more exposure
-ls10d <- lsmeans(m10, "race")
+ls10d <- lsmeans(m10, "race2lvl")
 plot(ls10d, horiz = F)
 multcomp::cld(ls10d)
 
@@ -375,7 +391,7 @@ multcomp::cld(ls10d)
 anova(m9,m10,test = "Rao")
 
 
-summary(m10a <- glm(exp[d$blood == 'rel'] ~  group_early + sev + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
+summary(m10a <- glm(exp[d$blood == 'rel'] ~  group_early + sev + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = d))
 car::Anova(m10a, type = "III")
 ls10e <- lsmeans(m10a, "group_early")
 contrast(ls10e, method = "pairwise", adjust ="tukey")
@@ -389,7 +405,7 @@ plot(ls10aBlood, horiz = F)
 multcomp::cld(ls10aBlood)
 
 
-summary(m11 <- glm(exp ~  group_early + rel*sev + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
+summary(m11 <- glm(exp ~  group_early + rel*sev + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = d))
 car::Anova(m11, type = "III", test.statistic = c("F"))
 ls11 <- lsmeans(m11, "group_early")
 multcomp::cld(ls11, sort = FALSE)
@@ -412,7 +428,7 @@ multcomp::cld(ls11env)
 anova(m11,m11b,test = "Rao")
 
 #checking if we have a good reason to keep education in there.
-summary(m11b <- glm(exp ~  group_early + rel*sev + BASELINEAGE*sev +  race + (1:ID), family = binomial, data = d))
+summary(m11b <- glm(exp ~  group_early + rel*sev + BASELINEAGE*sev +  race2lvl + (1:ID), family = binomial, data = d))
 car::Anova(m11b, type = "III")
 ls11b <- lsmeans(m11b, "group_early")
 plot(ls11b, horiz = F)
@@ -426,7 +442,7 @@ aggregate(d[,54], list(d$group_early), mean, na.rm= TRUE)
 
 
 # specifically test group*relation to rule out familial clustering: NS, does not improve fit
-summary(m11a <- glm(exp ~  group_early*sev*rel + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = d))
+summary(m11a <- glm(exp ~  group_early*sev*rel + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = d))
 car::Anova(m11a, type = "III")
 
 anova(m11,m11a, test = "Rao")
@@ -437,7 +453,7 @@ plot(ls11a2)
 #since plot does not work, try without HC group
 dd$exp <- dd$events>0
 
-summary(m11_noHealthy <- glm(exp ~  group_early*sev*rel + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = dd))
+summary(m11_noHealthy <- glm(exp ~  group_early*sev*rel + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = dd))
 car::Anova(m11_noHealthy, type = "III")
 anova(m11,m11_noHealthy, test = "Rao")
 
@@ -450,10 +466,10 @@ plot(ls11a)
 
 
 # test substance and anxiety -- not significant
-summary(m12 <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  EDUCATION  + race + SubstanceLifetime + AnxietyLifetime + (1:ID), family = binomial, data = d))
+summary(m12 <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  EDUCATION  + race2lvl + SubstanceLifetime + AnxietyLifetime + (1:ID), family = binomial, data = d))
 car::Anova(m12, type = "III")
 
-summary(m12a <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  race + SubstanceLifetime + AnxietyLifetime + (1:ID), family = binomial, data = d))
+summary(m12a <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  race2lvl + SubstanceLifetime + AnxietyLifetime + (1:ID), family = binomial, data = d))
 car::Anova(m12a, type = "III")
 
 anova(m11b,m12, test = "Rao")
@@ -526,14 +542,14 @@ theta.resp <- theta.ml(na.omit(dblood1e$events), mean(na.omit(dblood1e$events)),
 dblood$exp <- dblood$events>0
 
 #THIS ONE
-summary(m10blood <- glm(exp ~  group_early + sev + BASELINEAGE*sev +  EDUCATION  + race + (1:ID), family = binomial, data = dblood))
+summary(m10blood <- glm(exp ~  group_early + sev + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = dblood))
 car::Anova(m10blood, type = "III")
 ls10blood <- lsmeans(m10blood, "group_early")
 contrast(ls10blood, method = "pairwise", adjust ="tukey")
 multcomp::cld(ls10blood, sort = FALSE)
 plot(ls10blood, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
 
-summary(m11blood <- glm(exp ~  group_early*sev + BASELINEAGE +  EDUCATION  + race + (1:ID), family = binomial, data = dblood))
+summary(m11blood <- glm(exp ~  group_early*sev + BASELINEAGE +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = dblood))
 car::Anova(m11blood, type = "III")
 ls11blood <- lsmeans(m11blood, "group_early")
 contrast(ls11blood, method = "pairwise", adjust ="tukey")
@@ -562,13 +578,16 @@ CLD_blood$.group=gsub(" ", "", CLD_blood$.group)
 View(CLD_all)
 CLD_all <- rbind(CLD, CLD_blood)
 CLD_all$models <- c(rep("any exposure",5), rep("family exposure", 5))
-pdf(file = "Merged_Figure.pdf", width = 8, height = 6)
+
+CLD$group_early <- factor(CLD$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
+
+pdf(file = "group_only_Figure.pdf", width = 8, height = 6)
 pd = position_dodge(0.8)    ### How much to jitter the points on the plot
-ggplot(CLD_all,
+ggplot(CLD,
        aes(x     = group_early,
            y     = lsmean,
            label = .group,
-           col = models)) +
+           col = group_early)) +
   xlab(NULL) +
   geom_point(shape  = 15,
              size   = 4,
@@ -597,7 +616,49 @@ ggplot(CLD_all,
             nudge_y = c(0.8,  0.8, 0.8,  0.8, 0.8),
             color   = "black")
 dev.off()
-pdf(file = "Exposure by group PRETTY.m10and10blood.pdf", width = 8, height = 6)
+
+
+# group plots by relation
+CLD_rel$group_early <- factor(CLD_rel$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
+
+pdf(file = "rel_Figure.pdf", width = 8, height = 6)
+pd = position_dodge(0.8)    ### How much to jitter the points on the plot
+ggplot(CLD_rel,
+       aes(x     = group_early,
+           y     = lsmean,
+           label = .group,
+           col = rel)) +
+  xlab(NULL) +
+  geom_point(shape  = 15,
+             size   = 4,
+             position = pd) +
+  geom_errorbar(aes(ymin  =  asymp.LCL,
+                    ymax  =  asymp.UCL),
+                width =  0.2,
+                size  =  0.7,
+                position = pd) +
+  theme_classic() +
+  theme(axis.title   = element_text(face = "bold"),
+        axis.text    = element_text(face = "bold"),
+        plot.caption = element_text(hjust = 0)) +
+  ylab("Least square log probability of suicidal behavior among family or friends \nLower prevalence   <-   ->   Higher prevalence") +
+  ggtitle ("Occurrence of suicidal behavior among family or friends by group",
+           subtitle = "Binary logistic mixed-effects model") +
+  labs(caption  = paste0("\n",
+                         "Boxes indicate the LS mean log probability.\n",
+                         "Error bars indicate the 95% ",
+                         "confidence interval of the LS mean. \n",
+                         "Means sharing a letter are ",
+                         "not significantly different ",
+                         "(Tukey-adjusted comparisons)."),
+       hjust=0.5) +
+  geom_text(nudge_x = c(0.1, -0.1, 0.1, -0.1, 0.1),
+            nudge_y = c(0.8,  0.8, 0.8,  0.8, 0.8),
+            color   = "black")
+dev.off()
+
+
+'pdf(file = "Exposure by group PRETTY.m10and10blood.pdf", width = 8, height = 6)
 pd = position_dodge(0.8)    ### How much to jitter the points on the plot
 ggplot(CLD,
        aes(x     = group_early,
