@@ -4,7 +4,7 @@
 # unique(df$ENVRNMTL)
 
 #install.packages(c("car","readr", "lme4", "ggplot2", "tidyr", "psych", "gdata", "xtable", "Hmisc", "nnet", 
-#"reshape2", "corrplot", "lsmeans", "readxl", "MASS", "stargazer", "compareGroups", "multcompView","RColorBrewer"))
+#"reshape2", "corrplot", "lsmeans", "readxl", "MASS", "stargazer", "compareGroups", "multcompView","RColorBrewer","VIM"))
 
 #install.packages("fifer")
 #library(fifer)
@@ -38,6 +38,7 @@ library(compareGroups)
 # library(fastICA)
 # library(plotly)
 
+#rm(list = ls())
 
 #df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
 #"\t", escape_double = FALSE, trim_ws = TRUE)
@@ -60,15 +61,16 @@ df <- read_delim("FAMHX_DEMOG_COUNTS_MERGED_10.4.17.csv",
 
 
 #at home
+setwd("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission")
 df <- read_delim("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
                   "\t", escape_double = FALSE, trim_ws = TRUE)
 
-#For Alex:
-setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
-
-
-df <- read_delim("FAMHX_DEMOG_COUNTS_MERGED_10.4.17.csv",
-                 "\t", escape_double = FALSE, trim_ws = TRUE)
+# #For Alex:
+# setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
+# 
+# 
+# df <- read_delim("FAMHX_DEMOG_COUNTS_MERGED_10.4.17.csv",
+#                  "\t", escape_double = FALSE, trim_ws = TRUE)
 
 
 View(df)
@@ -97,6 +99,14 @@ df$AnxietyLifetime[df$GROUP1245==1] <- NA
 df$TOTALATTEMPTS[df$GROUP1245!=5] <- NA
 df$MAXLETHALITY[df$GROUP1245!=5] <- NA
 
+df$SubstanceLifetime <- as.factor(df$SubstanceLifetime)
+df$AnxietyLifetime <- as.factor(df$AnxietyLifetime)
+df$firstdegaffective <- as.factor(df$firstdegaffective)
+df$firstdegsubstance <- as.factor(df$firstdegsubstance)
+df$spouseaffective <- as.factor(df$spouseaffective)
+df$spousesubstance<- as.factor(df$spousesubstance)
+df$marital2lvl<- as.factor(df$marital2lvl)
+
 df$GROUP[df$GROUP=='DEPRESSION-IDEATOR'] <- "IDEATOR"
 df$group_early <- df$GROUP
 df$group_early[df$group_early=="CONTROL"] <- "Non-psychiatric controls"
@@ -112,8 +122,6 @@ levels(df$group_early) <- gsub(" ", "\n", levels(df$group_early))
 df$group_early_no_break=gsub("\n", " ", df$group_early)
 df$group_early_no_break <- as.factor(df$group_early_no_break)
 df$group_early_no_break = factor(df$group_early_no_break, levels(df$group_early_no_break)[c(3,4,5,1,2)])
-df$SubstanceLifetime <- as.factor(df$SubstanceLifetime)
-df$AnxietyLifetime <- as.factor(df$AnxietyLifetime)
 
 # recode a variable: everyone with a h/o suicidal behavior among 2nd degree relatives
 df$seconddegSB <- 0
@@ -196,7 +204,7 @@ d$group_early <- relevel(d$group_early, ref = c("Non-suicidal\ndepressed"))
 
 # discard the stupid variables
 
-d <- d[,c(1:45,113:ncol(d))]
+#d <- d[,c(1:45,113:ncol(d))]
 d$relation <- d$variable
 d$events <- d$value
 d$sev[d$relation == "num1stExposuresSC" | d$relation == "num2ndExposuresSC" | d$relation == "numEnvExposuresSC"] <- "suicide"
@@ -328,7 +336,6 @@ multcomp::cld(ls8)
 # exclude healthy controls
 dd <- d[d$GROUP1245 != "1",]
 
-
 #show that the three-way interaction was only significant because of healthy controls
 summary(m6.no_healthy <- glm(events ~  group_early*sev*blood  + BASELINEAGE*sev +  EDUCATION  + race2lvl  + (1:ID), family = negative.binomial(theta = theta.ed), data = dd))
 car::Anova(m6.no_healthy, type = "III")
@@ -358,148 +365,139 @@ ls10 <- lsmeans(m10, "group_early")
 contrast(ls10, method = "pairwise", adjust ="tukey")
 plot(ls10, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
 
-ls10rel <- lsmeans(m10, "group_early", by = "rel")
+#basic model without any demog
+summary(m10_M1 <- glm(exp ~  group_early*rel + rel*sev + BASELINEAGE*sev + (1:ID), family = binomial, data = d))
+car::Anova(m10_M1, type = "III")
+ls10_M1 <- lsmeans(m10_M1, "group_early")
+contrast(ls10_M1, method = "pairwise", adjust ="tukey")
+plot(ls10_M1, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
 
-CLD_rel <- multcomp::cld(ls10rel,
-                           alpha=0.05,
-                           Letters=letters,
-                           adjust="tukey")
-CLD_rel$.group=gsub(" ", "", CLD_rel$.group)
+#re-running m10_M1 with blood instead of rel for the multi panel figure
+summary(m10_M1blood <- glm(exp ~  group_early*blood + blood*sev + BASELINEAGE*sev + (1:ID), family = binomial, data = d))
+car::Anova(m10_M1blood, type = "III")
+ls10_M1blood <- lsmeans(m10_M1blood, "group_early")
+contrast(ls10_M1blood, method = "pairwise", adjust ="tukey")
+plot(ls10_M1blood, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
 
+#demog sensitivity
+summary(m10_M2 <- glm(exp ~  group_early*rel + rel*sev + BASELINEAGE*sev + race2lvl + EDUCATION + GENDERTEXT + marital2lvl + (1:ID), family = binomial, data = d))
+car::Anova(m10_M2, type = "III")
+ls10_M2 <- lsmeans(m10_M2, "group_early")
+contrast(ls10_M2, method = "pairwise", adjust ="tukey")
+plot(ls10_M2, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
 
-# do not worry about this interaction plot -- just did it to rule out familial clustering once and for all
-ls10a <- lsmeans(m10, "group_early", by = "rel")
-plot(ls10a, horiz = F)
-multcomp::cld(ls10a)
+d$SubstanceLifetime[d$group_early == "Non-psychiatric\ncontrols"] <- 0
+d$AnxietyLifetime[d$group_early == "Non-psychiatric\ncontrols"] <- 0
 
-# evaluate interaction- nonrel, more exp to completions
-ls10b <- lsmeans(m10, "sev", by = "rel")
-plot(ls10b, horiz = F)
-multcomp::cld(ls10b)
-
-# evaluate interaction- older, more exp to completions
-ls10c <- lsmeans(m10, "BASELINEAGE", by = "sev", at = list(BASELINEAGE = c(40,60,80)))
-plot(ls10c, horiz = F)
-multcomp::cld(ls10c)
-
-# evaluate main effect- caucasions, more exposure
-ls10d <- lsmeans(m10, "race2lvl")
-plot(ls10d, horiz = F)
-multcomp::cld(ls10d)
-
-
-anova(m9,m10,test = "Rao")
-
-
-summary(m10a <- glm(exp[d$blood == 'rel'] ~  group_early + sev + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = d))
-car::Anova(m10a, type = "III")
-ls10e <- lsmeans(m10a, "group_early")
-contrast(ls10e, method = "pairwise", adjust ="tukey")
-plot(ls10e, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
-
-anova(m10a,m10,test="Rao")
-
-# evaluate interaction- nonrel, more completions- not the yn model interaction
-ls10aBlood <- lsmeans(m10a, "sev", by = "blood")
-plot(ls10aBlood, horiz = F)
-multcomp::cld(ls10aBlood)
+#psychopathology sensitivity
+summary(m10_M3 <- glm(exp ~  group_early*rel + rel*sev + BASELINEAGE*sev + race2lvl + EDUCATION + GENDERTEXT + marital2lvl  + AnxietyLifetime + SubstanceLifetime + (1:ID), family = binomial, data = d))
+car::Anova(m10_M3, type = "III")
+ls10_M3 <- lsmeans(m10_M3, "group_early")
+contrast(ls10_M3, method = "pairwise", adjust ="tukey")
+plot(ls10_M3, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
 
 
-summary(m11 <- glm(exp ~  group_early + rel*sev + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = d))
-car::Anova(m11, type = "III", test.statistic = c("F"))
-ls11 <- lsmeans(m11, "group_early")
-multcomp::cld(ls11, sort = FALSE)
-plot(ls11, horiz = F)
-contrast(ls11, method = "pairwise", adjust ="tukey")
+# # do not worry about this interaction plot -- just did it to rule out familial clustering once and for all
+# ls10a <- lsmeans(m10, "group_early", by = "rel")
+# plot(ls10a, horiz = F)
+# multcomp::cld(ls10a)
+# 
+# # evaluate interaction- nonrel, more exp to completions
+# ls10b <- lsmeans(m10, "sev", by = "rel")
+# plot(ls10b, horiz = F)
+# multcomp::cld(ls10b)
+# 
+# # evaluate interaction- older, more exp to completions
+# ls10c <- lsmeans(m10, "BASELINEAGE", by = "sev", at = list(BASELINEAGE = c(40,60,80)))
+# plot(ls10c, horiz = F)
+# multcomp::cld(ls10c)
+# 
+# # evaluate main effect- caucasions, more exposure
+# ls10d <- lsmeans(m10, "race2lvl")
+# plot(ls10d, horiz = F)
+# multcomp::cld(ls10d)
+# 
+# anova(m9,m10,test = "Rao")
+# 
+# summary(m10a <- glm(exp[d$blood == 'rel'] ~  group_early + sev + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = d))
+# car::Anova(m10a, type = "III")
+# ls10e <- lsmeans(m10a, "group_early")
+# contrast(ls10e, method = "pairwise", adjust ="tukey")
+# plot(ls10e, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
+# 
+# anova(m10a,m10,test="Rao")
+# 
+# # evaluate interaction- nonrel, more completions- not the yn model interaction
+# ls10aBlood <- lsmeans(m10a, "sev", by = "blood")
+# plot(ls10aBlood, horiz = F)
+# multcomp::cld(ls10aBlood)
+# 
+# 
+# summary(m11 <- glm(exp ~  group_early + rel*sev + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = d))
+# car::Anova(m11, type = "III", test.statistic = c("F"))
+# ls11 <- lsmeans(m11, "group_early")
+# multcomp::cld(ls11, sort = FALSE)
+# plot(ls11, horiz = F)
+# contrast(ls11, method = "pairwise", adjust ="tukey")
+# 
+# 
+# # evaluate interaction- older people, less attempts
+# ls11age <- lsmeans(m11, "sev", by = "BASELINEAGE", at = list(BASELINEAGE = c(40,60,80)))
+# plot(ls11age, horiz = F)
+# multcomp::cld(ls11age)
+# 
+# 
+# # evaluate interaction- environment, more completions
+# ls11env <- lsmeans(m11, "sev", by = "rel")
+# plot(ls11env, horiz = F)
+# multcomp::cld(ls11env)
+# 
+# anova(m11,m11b,test = "Rao")
+# 
+# #checking if we have a good reason to keep education in there.
+# summary(m11b <- glm(exp ~  group_early + rel*sev + BASELINEAGE*sev +  race2lvl + (1:ID), family = binomial, data = d))
+# car::Anova(m11b, type = "III")
+# ls11b <- lsmeans(m11b, "group_early")
+# plot(ls11b, horiz = F)
+# 
+# anova(m11,m11b,test = "Rao")
+# 
+# 
+# names(d)
+# aggregate(d[,54], list(d$group_early), mean, na.rm= TRUE)
+# 
+# 
+# # specifically test group*relation to rule out familial clustering: NS, does not improve fit
+# summary(m11a <- glm(exp ~  group_early*sev*rel + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = d))
+# car::Anova(m11a, type = "III")
+# anova(m11,m11a, test = "Rao")
+# ls11a2 <- lsmeans(m11a, "group_early", by = c("rel","sev"))
+# plot(ls11a2)
+# 
+# #since plot does not work, try without HC group
+# dd$exp <- dd$events>0
+# summary(m11_noHealthy <- glm(exp ~  group_early*sev*rel + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = dd))
+# car::Anova(m11_noHealthy, type = "III")
+# anova(m11,m11_noHealthy, test = "Rao")
+# ls11a2_noHealthy <- lsmeans(m11_noHealthy, "group_early", by = c("rel","sev"))
+# plot(ls11a2_noHealthy)
+# 
+# # plot NS interaction for qualitative look:  still a problem with 2nd degree
+# ls11a <- lsmeans(m11a, "group_early", by = "rel")
+# plot(ls11a)
+# 
+# 
+# # test substance and anxiety -- not significant
+# summary(m12 <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  EDUCATION  + race2lvl + SubstanceLifetime + AnxietyLifetime + (1:ID), family = binomial, data = d))
+# car::Anova(m12, type = "III")
+# summary(m12a <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  race2lvl + SubstanceLifetime + AnxietyLifetime + (1:ID), family = binomial, data = d))
+# car::Anova(m12a, type = "III")
+# anova(m11b,m12, test = "Rao")
 
-
-# evaluate interaction- older people, less attempts
-ls11age <- lsmeans(m11, "sev", by = "BASELINEAGE", at = list(BASELINEAGE = c(40,60,80)))
-plot(ls11age, horiz = F)
-multcomp::cld(ls11age)
-
-
-# evaluate interaction- environment, more completions
-ls11env <- lsmeans(m11, "sev", by = "rel")
-plot(ls11env, horiz = F)
-multcomp::cld(ls11env)
-
-
-anova(m11,m11b,test = "Rao")
-
-#checking if we have a good reason to keep education in there.
-summary(m11b <- glm(exp ~  group_early + rel*sev + BASELINEAGE*sev +  race2lvl + (1:ID), family = binomial, data = d))
-car::Anova(m11b, type = "III")
-ls11b <- lsmeans(m11b, "group_early")
-plot(ls11b, horiz = F)
-
-
-anova(m11,m11b,test = "Rao")
-
-
-names(d)
-aggregate(d[,54], list(d$group_early), mean, na.rm= TRUE)
-
-
-# specifically test group*relation to rule out familial clustering: NS, does not improve fit
-summary(m11a <- glm(exp ~  group_early*sev*rel + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = d))
-car::Anova(m11a, type = "III")
-
-anova(m11,m11a, test = "Rao")
-
-ls11a2 <- lsmeans(m11a, "group_early", by = c("rel","sev"))
-plot(ls11a2)
-
-#since plot does not work, try without HC group
-dd$exp <- dd$events>0
-
-summary(m11_noHealthy <- glm(exp ~  group_early*sev*rel + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = dd))
-car::Anova(m11_noHealthy, type = "III")
-anova(m11,m11_noHealthy, test = "Rao")
-
-ls11a2_noHealthy <- lsmeans(m11_noHealthy, "group_early", by = c("rel","sev"))
-plot(ls11a2_noHealthy)
-
-# plot NS interaction for qualitative look:  still a problem with 2nd degree
-ls11a <- lsmeans(m11a, "group_early", by = "rel")
-plot(ls11a)
-
-
-# test substance and anxiety -- not significant
-summary(m12 <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  EDUCATION  + race2lvl + SubstanceLifetime + AnxietyLifetime + (1:ID), family = binomial, data = d))
-car::Anova(m12, type = "III")
-
-summary(m12a <- glm(exp ~  group_early + sev*rel + BASELINEAGE*sev +  race2lvl + SubstanceLifetime + AnxietyLifetime + (1:ID), family = binomial, data = d))
-car::Anova(m12a, type = "III")
-
-anova(m11b,m12, test = "Rao")
-
-stargazer(m10,m10blood, type="html", out="trans.blood.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
-         # dep.var.labels=c("Exposures"), covariate.labels=c("Non-psychiatric Controls","Ideators","Early-onset Attempters","Late-onset Attempters", 
-         #                                          "Relationship: 2nd Degree Relative", "Relationship: environment", 
-         #                                          "Suicide Severity (Completion)", "Age", "Education", "Race", 
-         #                                          "Depressed*2nd", "Ideator*2nd", "EoAttempter*2nd", "LoAttempter*2nd",
-         #                                          "Depressed*Environment", "Ideator*Environment", "EoAttempter*Environment", 
-         #                                          "LoAttempter*Environment", "2nd*Suicide Severity", "Environment*Suicide Severity",
-         #                                          "Suicide Severity*Age"))
-
-
-stargazer(m10, m11, type="html", out="trans.labeled.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-          dep.var.labels=c("Exposures"), covariate.labels=c("Depressed","Ideators","Early-onset Attempters","Late-onset Attempters", 
-                                                            "Relationship: 2nd Degree Relative", "Relationship: environment", 
-                                                            "Suicide Severity (Completion)", "Age", "Education", "Race", 
-                                                            "Depressed*2nd", "Ideator*2nd", "EoAttempter*2nd", "LoAttempter*2nd",
-                                                            "Depressed*Environment", "Ideator*Environment", "EoAttempter*Environment", 
-                                                            "LoAttempter*Environment", "2nd*Suicide Severity", "Environment*Suicide Severity",
-                                                            "Suicide Severity*Age"))
-
-
-# new dataset without enviromental exposures
+# BLOOD DATASET- new dataset without enviromental exposures
 
 df <- as.data.frame(df)
-
 dblood = melt(df, na.rm = FALSE, measure.vars = c("num1stExposuresSC","num1stExposuresSA", "num2ndExposuresSC", "num2ndExposuresSA"))
-
 dblood$group_early <- relevel(dblood$group_early, ref = "Non-suicidal\ndepressed")
 
 #resetting group order
@@ -517,7 +515,6 @@ dblood$rel[dblood$relation=="num2ndExposuresSC" | dblood$relation=="num2ndExposu
 
 barchart(dblood$relation)
 
-
 dblood1e <- d[dblood$rel=="1st",]
 
 ## check if distribution of events roughly fits NB
@@ -531,11 +528,9 @@ actual <- dblood$events
 histogram(~ simulated + actual)
 # conclusion -- not a perfect fit, but OK
 
-
 # build a model
 
 # estimate theta for nb
-
 theta.resp <- theta.ml(na.omit(dblood1e$events), mean(na.omit(dblood1e$events)), length(dblood1e$events), limit = 50, eps = .Machine$double.eps^.25, trace = FALSE)
 
 #dichotomize exposure in dblood
@@ -549,15 +544,27 @@ contrast(ls10blood, method = "pairwise", adjust ="tukey")
 multcomp::cld(ls10blood, sort = FALSE)
 plot(ls10blood, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
 
-summary(m11blood <- glm(exp ~  group_early*sev + BASELINEAGE +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = dblood))
-car::Anova(m11blood, type = "III")
-ls11blood <- lsmeans(m11blood, "group_early")
-contrast(ls11blood, method = "pairwise", adjust ="tukey")
-plot(ls11blood, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
+#STARGAZER COMPARING FINAL MODELS AND SENSITIVITY ANALYSES
+stargazer(m10blood, type="html", out="trans_blood.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
+stargazer(m10_M1,m10_M2,m10_M3, type="html", out="trans_sensitivity.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
+# dep.var.labels=c("Exposures"), covariate.labels=c("Non-psychiatric Controls","Ideators","Early-onset Attempters","Late-onset Attempters", 
+#                                          "Relationship: 2nd Degree Relative", "Relationship: environment", 
+#                                          "Suicide Severity (Completion)", "Age", "Education", "Race", 
+#                                          "Depressed*2nd", "Ideator*2nd", "EoAttempter*2nd", "LoAttempter*2nd",
+#                                          "Depressed*Environment", "Ideator*Environment", "EoAttempter*Environment", 
+#                                          "LoAttempter*Environment", "2nd*Suicide Severity", "Environment*Suicide Severity",
+#                                          "Suicide Severity*Age"))
 
-ls11blood_b <- lsmeans(m11blood, "group_early", by = "sev")
-plot(ls11blood_b, horiz = F)
-multcomp::cld(ls11blood_b, sort = FALSE)
+
+# summary(m11blood <- glm(exp ~  group_early*sev + BASELINEAGE +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = dblood))
+# car::Anova(m11blood, type = "III")
+# ls11blood <- lsmeans(m11blood, "group_early")
+# contrast(ls11blood, method = "pairwise", adjust ="tukey")
+# plot(ls11blood, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
+# 
+# ls11blood_b <- lsmeans(m11blood, "group_early", by = "sev")
+# plot(ls11blood_b, horiz = F)
+# multcomp::cld(ls11blood_b, sort = FALSE)
 
 
 #plot figure m10
@@ -570,18 +577,41 @@ CLD$.group=gsub(" ", "", CLD$.group)
 # CLD$g=c("Non-psychiatric controls", "Non-suicidal depressed", "Suicide ideators", "Early-onset attempters", "Late-onset attempters")
 
 #plot figure m10,10blood merged
+# CLD_blood <- multcomp::cld(ls10blood,
+#                            alpha=0.05,
+#                            Letters=letters,
+#                            adjust="tukey")
+# CLD_blood$.group=gsub(" ", "", CLD_blood$.group)
+# View(CLD_all)
+# CLD_all <- rbind(CLD, CLD_blood)
+# CLD_all$models <- c(rep("any exposure",5), rep("family exposure", 5))
+
+
+# PLOTS
+
+#releveling for the plots
+ls10blood <- lsmeans(m10_M1blood, "group_early", by = "blood")
 CLD_blood <- multcomp::cld(ls10blood,
                            alpha=0.05,
                            Letters=letters,
                            adjust="tukey")
 CLD_blood$.group=gsub(" ", "", CLD_blood$.group)
-View(CLD_all)
-CLD_all <- rbind(CLD, CLD_blood)
-CLD_all$models <- c(rep("any exposure",5), rep("family exposure", 5))
 
+ls10rel <- lsmeans(m10, "group_early", by = "rel")
+CLD_rel <- multcomp::cld(ls10rel,
+                         alpha=0.05,
+                         Letters=letters,
+                         adjust="tukey")
+CLD_rel$.group=gsub(" ", "", CLD_rel$.group)
+
+#releveling for the plots
 CLD$group_early <- factor(CLD$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
+CLD_rel$group_early <- factor(CLD_rel$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
+CLD_blood$group_early <- factor(CLD_blood$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
+CLD_rel$rel <- factor(CLD_rel$rel, levels = c("ENV","2nd", "1st"))
 
-pdf(file = "group_only_Figure.pdf", width = 8, height = 6)
+#plot main figure
+pdf(file = "Main_Figure.pdf", width = 8, height = 6)
 pd = position_dodge(0.8)    ### How much to jitter the points on the plot
 ggplot(CLD,
        aes(x     = group_early,
@@ -597,11 +627,12 @@ ggplot(CLD,
                 width =  0.2,
                 size  =  0.7,
                 position = pd) +
-  theme_classic() +
+  theme_bw() +
   theme(axis.title   = element_text(face = "bold"),
         axis.text    = element_text(face = "bold"),
-        plot.caption = element_text(hjust = 0)) +
-  ylab("Least square log probability of suicidal behavior among family or friends \nLower prevalence   <-   ->   Higher prevalence") +
+        plot.caption = element_text(hjust = 0),
+        legend.title = element_blank()) +
+  ylab("Least square log probability of exposure \nLower prevalence   <-   ->   Higher prevalence") +
   ggtitle ("Occurrence of suicidal behavior among family or friends by group",
            subtitle = "Binary logistic mixed-effects model") +
   labs(caption  = paste0("\n",
@@ -612,15 +643,16 @@ ggplot(CLD,
                          "not significantly different ",
                          "(Tukey-adjusted comparisons)."),
        hjust=0.5) +
-  geom_text(nudge_x = c(0.1, -0.1, 0.1, -0.1, 0.1),
-            nudge_y = c(0.8,  0.8, 0.8,  0.8, 0.8),
-            color   = "black")
+  geom_text(nudge_x = c(0.1, 0.1, 0.1, -0.1, 0.1),
+            nudge_y = c(0.95,  0.95, 0.9,  0.8, 0.8),
+            color   = "black") +
+scale_color_manual(values = c("grey80", "grey60", "grey45", "grey30", "grey15"))
 dev.off()
 
 
-# group plots by relation
+#plots by rel
 CLD_rel$group_early <- factor(CLD_rel$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
-
+View(CLD_rel)
 pdf(file = "rel_Figure.pdf", width = 8, height = 6)
 pd = position_dodge(0.8)    ### How much to jitter the points on the plot
 ggplot(CLD_rel,
@@ -640,9 +672,10 @@ ggplot(CLD_rel,
   theme_classic() +
   theme(axis.title   = element_text(face = "bold"),
         axis.text    = element_text(face = "bold"),
-        plot.caption = element_text(hjust = 0)) +
-  ylab("Least square log probability of suicidal behavior among family or friends \nLower prevalence   <-   ->   Higher prevalence") +
-  ggtitle ("Occurrence of suicidal behavior among family or friends by group",
+        plot.caption = element_text(hjust = 0),
+        legend.title= element_blank()) +
+  ylab("Least square log probability of exposures \nLower prevalence   <-   ->   Higher prevalence") +
+  ggtitle ("Occurrence of suicidal behavior by degree of relation",
            subtitle = "Binary logistic mixed-effects model") +
   labs(caption  = paste0("\n",
                          "Boxes indicate the LS mean log probability.\n",
@@ -652,18 +685,28 @@ ggplot(CLD_rel,
                          "not significantly different ",
                          "(Tukey-adjusted comparisons)."),
        hjust=0.5) +
-  geom_text(nudge_x = c(0.1, -0.1, 0.1, -0.1, 0.1),
-            nudge_y = c(0.8,  0.8, 0.8,  0.8, 0.8),
-            color   = "black")
+  geom_text(#position = "identity",
+            nudge_x = c(-0.1, -0.1, -0.1, -0.1, -0.1, 0.4, 0.4, 0.4, 0.4, 0.4, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1),
+            nudge_y = c(0.1, 0.1, 0.1, 0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5),
+            color   = c("darkolivegreen3","darkolivegreen3","darkolivegreen3","darkolivegreen3","darkolivegreen3",
+                        "orange2", "orange2","orange2","orange2","orange2",
+                        "orchid3","orchid3","orchid3","orchid3","orchid3")) +
+  scale_color_manual(values = c("darkolivegreen3","orchid3","orange2"))
 dev.off()
 
 
-'pdf(file = "Exposure by group PRETTY.m10and10blood.pdf", width = 8, height = 6)
+#plot blood vs env
+CLD_blood$group_early <- factor(CLD_blood$group_early, 
+                                levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators",
+                                           "Early-onset\nattempters","Late-onset\nattempters"))
+View(CLD_blood)
+pdf(file = "blood_Figure.pdf", width = 8, height = 6)
 pd = position_dodge(0.8)    ### How much to jitter the points on the plot
-ggplot(CLD,
+ggplot(CLD_blood,
        aes(x     = group_early,
            y     = lsmean,
-           label = .group)) +
+           label = .group,
+           col = blood)) +
   xlab(NULL) +
   geom_point(shape  = 15,
              size   = 4,
@@ -673,12 +716,13 @@ ggplot(CLD,
                 width =  0.2,
                 size  =  0.7,
                 position = pd) +
-  theme_bw() +
+  theme_classic() +
   theme(axis.title   = element_text(face = "bold"),
         axis.text    = element_text(face = "bold"),
-        plot.caption = element_text(hjust = 0)) +
-  ylab("Least square log probability of suicidal behavior among family or friends \nLower prevalence   <-   ->   Higher prevalence") +
-  ggtitle ("Occurrence of suicidal behavior among family or friends by group",
+        plot.caption = element_text(hjust = 0),
+        legend.title= element_blank()) +
+  ylab("Least square log probability of exposures \nLower prevalence   <-   ->   Higher prevalence") +
+  ggtitle ("Occurrence of suicidal behavior in family vs environment",
            subtitle = "Binary logistic mixed-effects model") +
   labs(caption  = paste0("\n",
                          "Boxes indicate the LS mean log probability.\n",
@@ -688,131 +732,91 @@ ggplot(CLD,
                          "not significantly different ",
                          "(Tukey-adjusted comparisons)."),
        hjust=0.5) +
-  geom_text(nudge_x = c(0.1, -0.1, 0.1, -0.1, 0.1),
-            nudge_y = c(0.8,  0.8, 0.8,  0.8, 0.8),
-            color   = "black")
-dev.off()
-
-#plot figure m10blood
-CLD_blood <- multcomp::cld(ls10blood,
-                     alpha=0.05,
-                     Letters=letters,
-                     adjust="tukey")
-CLD_blood$.group=gsub(" ", "", CLD_blood$.group)
-# CLD$g=c("Non-psychiatric controls", "Non-suicidal depressed", "Suicide ideators", "Early-onset attempters", "Late-onset attempters")
-pdf(file = "Exposure by group PRETTY.m10blood.pdf", width = 8, height = 6)
-pd = position_dodge(0.8)    ### How much to jitter the points on the plot
-ggplot(CLD,
-       aes(x     = group_early,
-           y     = lsmean,
-           label = .group)) +
-  xlab(NULL) +
-  geom_point(shape  = 15,
-             size   = 4,
-             position = pd) +
-  geom_errorbar(aes(ymin  =  asymp.LCL,
-                    ymax  =  asymp.UCL),
-                width =  0.2,
-                size  =  0.7,
-                position = pd) +
-  theme_bw() +
-  theme(axis.title   = element_text(face = "bold"),
-        axis.text    = element_text(face = "bold"),
-        plot.caption = element_text(hjust = 0)) +
-  ylab("Least square log probability of suicidal behavior among family or friends \nLower prevalence   <-   ->   Higher prevalence") +
-  ggtitle ("Occurrence of suicidal behavior among blood relatives by group",
-           subtitle = "Binary logistic mixed-effects model") +
-  labs(caption  = paste0("\n",
-                         "Boxes indicate the LS mean log probability.\n",
-                         "Error bars indicate the 95% ",
-                         "confidence interval of the LS mean. \n",
-                         "Means sharing a letter are ",
-                         "not significantly different ",
-                         "(Tukey-adjusted comparisons)."),
-       hjust=0.5) +
-  geom_text(nudge_x = c(0.1, -0.1, 0.1, -0.1, 0.1),
-            nudge_y = c(0.8,  0.8, 0.8,  0.8, 0.8),
-            color   = "black")
+  geom_text(#position = "identity",
+    nudge_x = c(-0.07, -0.07, -0.07, -0.07, -0.07, 0.3, 0.3, 0.3, 0.3, 0.3),
+    nudge_y = c(0.1, 0.1, 0.1, 0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5),
+    color   = c("gray50","gray50","gray50","gray50","gray50",
+                "violetred4", "violetred4", "violetred4", "violetred4", "violetred4")) +
+  scale_color_manual(values = c("gray50","violetred3"))
 dev.off()
 
 
-#plot figure m11
-CLD <- multcomp::cld(ls11,
-                     alpha=0.05,
-                     Letters=letters,
-                     adjust="tukey")
-CLD$.group=gsub(" ", "", CLD$.group)
-# CLD$g=c("Non-psychiatric controls", "Non-suicidal depressed", "Suicide ideators", "Early-onset attempters", "Late-onset attempters")
-pdf(file = "Exposure by group PRETTY.m11.pdf", width = 8, height = 6)
-pd = position_dodge(0.8)    ### How much to jitter the points on the plot
-ggplot(CLD,
-       aes(x     = group_early,
-           y     = lsmean,
-           label = .group)) +
-  xlab(NULL) +
-  geom_point(shape  = 15,
-             size   = 4,
-             position = pd) +
-  geom_errorbar(aes(ymin  =  asymp.LCL,
-                    ymax  =  asymp.UCL),
-                width =  0.2,
-                size  =  0.7,
-                position = pd) +
-  theme_bw() +
-  theme(axis.title   = element_text(face = "bold"),
-        axis.text    = element_text(face = "bold"),
-        plot.caption = element_text(hjust = 0)) +
-  ylab("Least square log probability of suicidal behavior among family or friends \nLower prevalence   <-   ->   Higher prevalence") +
-  ggtitle ("Occurrence of suicidal behavior among family or friends by group",
-           subtitle = "Binary logistic mixed-effects model") +
-  labs(caption  = paste0("\n",
-                         "Boxes indicate the LS mean log probability.\n",
-                         "Error bars indicate the 95% ",
-                         "confidence interval of the LS mean. \n",
-                         "Means sharing a letter are ",
-                         "not significantly different ",
-                         "(Tukey-adjusted comparisons)."),
-       hjust=0.5) +
-  geom_text(nudge_x = c(0.1, -0.1, 0.1, -0.1, 0.1),
-             nudge_y = c(0.8,  0.8, 0.8,  0.8, 0.8),
-             color   = "black")
-dev.off()
- 
-#names(df)
-#View(df)
-
-# playing with Table 1- adding the variables Kati suggested
-chars <- df[,c(2,7,121,9,126,18,40,42,25,131,13,14,11,17,94,120,122,123,124)]
-# describe.by(chars,group = df$group_early_no_break)
-c <- compareGroups(chars,df$group_early_no_break)
-tc2 <- createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1, 
-                   show.p.mul = TRUE, show.ratio = TRUE)
-export2html(tc2, "Table1.kati.html")
-
-names(chars)
-names(df)
-
-
-
-
-# more comparisons of early vs late for a possible future paper
-chars <- df[df$GROUP1245==5,c(19:37)]
-# describe.by(chars,group = df$group_early_no_break)
-c1 <- compareGroups(chars,df$group_early_no_break[df$GROUP1245==5], bivar=TRUE)
-t1 <- createTable(c1,hide = NA, hide.no = 0, digits = 1, show.n = TRUE)
-export2html(t1, "early_vs_late.html")
-
-chars <- df[,c(19:37)]
-# describe.by(chars,group = df$group_early_no_break)
-c2 <- compareGroups(chars,df$group_early_no_break, bivar=TRUE)
-t2 <- createTable(c2,hide = NA, hide.no = 0, digits = 1, show.n = TRUE)
-export2html(t2, "early_vs_late_comparison_groups.html")
-
-# check anger: nothing with either measure, consider dropping from battery
-summary(tam1 <- lm(ARSTOTAL ~ group_early_no_break + BASELINEAGE + GENDERTEXT, data = df))
-anova(tam1)
-plot(lsmeans(tam1, "group_early_no_break"))
-cld(lsmeans(tam1, "group_early_no_break"))
+# 'pdf(file = "Exposure by group PRETTY.m10and10blood.pdf", width = 8, height = 6)
+# pd = position_dodge(0.8)    ### How much to jitter the points on the plot
+# ggplot(CLD,
+#        aes(x     = group_early,
+#            y     = lsmean,
+#            label = .group)) +
+#   xlab(NULL) +
+#   geom_point(shape  = 15,
+#              size   = 4,
+#              position = pd) +
+#   geom_errorbar(aes(ymin  =  asymp.LCL,
+#                     ymax  =  asymp.UCL),
+#                 width =  0.2,
+#                 size  =  0.7,
+#                 position = pd) +
+#   theme_bw() +
+#   theme(axis.title   = element_text(face = "bold"),
+#         axis.text    = element_text(face = "bold"),
+#         plot.caption = element_text(hjust = 0)) +
+#   ylab("Least square log probability of suicidal behavior among family or friends \nLower prevalence   <-   ->   Higher prevalence") +
+#   ggtitle ("Occurrence of suicidal behavior among family or friends by group",
+#            subtitle = "Binary logistic mixed-effects model") +
+#   labs(caption  = paste0("\n",
+#                          "Boxes indicate the LS mean log probability.\n",
+#                          "Error bars indicate the 95% ",
+#                          "confidence interval of the LS mean. \n",
+#                          "Means sharing a letter are ",
+#                          "not significantly different ",
+#                          "(Tukey-adjusted comparisons)."),
+#        hjust=0.5) +
+#   geom_text(nudge_x = c(0.1, -0.1, 0.1, -0.1, 0.1),
+#             nudge_y = c(0.8,  0.8, 0.8,  0.8, 0.8),
+#             color   = "black")
+# dev.off()
+# 
+# #plot figure m10blood
+# CLD_blood <- multcomp::cld(ls10blood,
+#                      alpha=0.05,
+#                      Letters=letters,
+#                      adjust="tukey")
+# CLD_blood$.group=gsub(" ", "", CLD_blood$.group)
+# # CLD$g=c("Non-psychiatric controls", "Non-suicidal depressed", "Suicide ideators", "Early-onset attempters", "Late-onset attempters")
+# pdf(file = "Exposure by group PRETTY.m10blood.pdf", width = 8, height = 6)
+# pd = position_dodge(0.8)    ### How much to jitter the points on the plot
+# ggplot(CLD,
+#        aes(x     = group_early,
+#            y     = lsmean,
+#            label = .group)) +
+#   xlab(NULL) +
+#   geom_point(shape  = 15,
+#              size   = 4,
+#              position = pd) +
+#   geom_errorbar(aes(ymin  =  asymp.LCL,
+#                     ymax  =  asymp.UCL),
+#                 width =  0.2,
+#                 size  =  0.7,
+#                 position = pd) +
+#   theme_bw() +
+#   theme(axis.title   = element_text(face = "bold"),
+#         axis.text    = element_text(face = "bold"),
+#         plot.caption = element_text(hjust = 0)) +
+#   ylab("Least square log probability of suicidal behavior among family or friends \nLower prevalence   <-   ->   Higher prevalence") +
+#   ggtitle ("Occurrence of suicidal behavior among blood relatives by group",
+#            subtitle = "Binary logistic mixed-effects model") +
+#   labs(caption  = paste0("\n",
+#                          "Boxes indicate the LS mean log probability.\n",
+#                          "Error bars indicate the 95% ",
+#                          "confidence interval of the LS mean. \n",
+#                          "Means sharing a letter are ",
+#                          "not significantly different ",
+#                          "(Tukey-adjusted comparisons)."),
+#        hjust=0.5) +
+#   geom_text(nudge_x = c(0.1, -0.1, 0.1, -0.1, 0.1),
+#             nudge_y = c(0.8,  0.8, 0.8,  0.8, 0.8),
+#             color   = "black")
+# dev.off()
 
 
 #percentages/distributions for 10/17 presentation
@@ -863,3 +867,33 @@ p <-
   geom_bar(aes(fill = Exposures), stat="identity", position="dodge", width=.9)
 p
 #p + labs(title = "DSM personality traits", y = "mean score")
+
+#TABLES
+names(df)
+# Table 1 with the variables Kati suggested
+chars <- df[,c(2,7,121,9,126,18,40,42,25,130,13,14,11,17,119,120,122,123,124,125)]
+# describe.by(chars,group = df$group_early_no_break)
+c <- compareGroups(chars,df$group_early_no_break)
+tc2 <- createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1, 
+                   show.p.mul = TRUE, show.ratio = TRUE)
+export2html(tc2, "Table1.kati2.html")
+
+# # MORE COMPARISONS FOR A POSSIBLE FUTURE PAPER
+# chars <- df[df$GROUP1245==5,c(19:37)]
+# # describe.by(chars,group = df$group_early_no_break)
+# c1 <- compareGroups(chars,df$group_early_no_break[df$GROUP1245==5], bivar=TRUE)
+# t1 <- createTable(c1,hide = NA, hide.no = 0, digits = 1, show.n = TRUE)
+# export2html(t1, "early_vs_late.html")
+# 
+# chars <- df[,c(19:37)]
+# # describe.by(chars,group = df$group_early_no_break)
+# c2 <- compareGroups(chars,df$group_early_no_break, bivar=TRUE)
+# t2 <- createTable(c2,hide = NA, hide.no = 0, digits = 1, show.n = TRUE)
+# export2html(t2, "early_vs_late_comparison_groups.html")
+# 
+# # check anger: nothing with either measure, consider dropping from battery
+# summary(tam1 <- lm(ARSTOTAL ~ group_early_no_break + BASELINEAGE + GENDERTEXT, data = df))
+# anova(tam1)
+# plot(lsmeans(tam1, "group_early_no_break"))
+# cld(lsmeans(tam1, "group_early_no_break"))
+# 
