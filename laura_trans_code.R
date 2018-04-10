@@ -37,8 +37,9 @@ library(compareGroups)
 # library(lattice)
 # library(fastICA)
 # library(plotly)
+library(effect)
 
-#rm(list = ls())
+rm(list = ls())
 
 #df <- read_delim("~/Box Sync/skinner/projects_analyses/Project Transmission/FAMHX_DEMOG_COUNTS_MERGED_10.4.17.dat",
 #"\t", escape_double = FALSE, trim_ws = TRUE)
@@ -73,13 +74,11 @@ df <- read_delim("C:/Users/Laura/Box Sync/skinner/projects_analyses/Project Tran
 #                  "\t", escape_double = FALSE, trim_ws = TRUE)
 
 
-View(df)
-names(df)
-
-
 # load("trans.Rda")
 # library(VIM)
 # df_aggr = aggr(df, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(df), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
+
+View(df)
 
 #checking missingness
 library(mice)
@@ -138,7 +137,6 @@ df$firstdegSC <- as.factor(df$firstdegSC)
 df$bloodSB<-0
 df$bloodSB[df$firstdegSB==1|df$seconddegSB==1]<-1
 df$bloodSB[is.na(df$firstdegSB)|is.na(df$seconddegSB)]<-"NA"
-View(df$bloodSB)
 
 df$race2lvl <- "NA"
 df$race2lvl[df$RACETEXT=="WHITE"] <- 0
@@ -221,7 +219,7 @@ d$blood[d$relation=="numEnvExposuresSC" | d$relation=="numEnvExposuresSA"] <- "n
 d1e <- d[d$rel=="1st" | d$rel=="ENV",]
 
 
-df$BIS_TOT<-rowSums(df[,c("BIS_NONPLAN","BIS_COGNIT","BIS_MOTOR")], na.rm = TRUE)
+df$BIS_TOT<-rowSums(df[,c("BIS_NONPLAN","BIS_COGNIT","BIS_MOTOR")], na.rm = FALSE)
 df$BIS_TOT
 
 save(df, file="trans.Rda")
@@ -526,7 +524,6 @@ actual <- dblood$events
 
 # just simple visual diagnostics
 histogram(~ simulated + actual)
-# conclusion -- not a perfect fit, but OK
 
 # build a model
 
@@ -652,7 +649,6 @@ dev.off()
 
 #plots by rel
 CLD_rel$group_early <- factor(CLD_rel$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
-View(CLD_rel)
 pdf(file = "rel_Figure.pdf", width = 8, height = 6)
 pd = position_dodge(0.8)    ### How much to jitter the points on the plot
 ggplot(CLD_rel,
@@ -699,7 +695,7 @@ dev.off()
 CLD_blood$group_early <- factor(CLD_blood$group_early, 
                                 levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators",
                                            "Early-onset\nattempters","Late-onset\nattempters"))
-View(CLD_blood)
+
 pdf(file = "blood_Figure.pdf", width = 8, height = 6)
 pd = position_dodge(0.8)    ### How much to jitter the points on the plot
 ggplot(CLD_blood,
@@ -897,3 +893,130 @@ export2html(tc2, "Table1.kati2.html")
 # plot(lsmeans(tam1, "group_early_no_break"))
 # cld(lsmeans(tam1, "group_early_no_break"))
 # 
+
+###### additional analysis ######
+# creating new variables
+df$suicidal <- NA
+df$suicidal[df$GROUP1245 == '4'|df$GROUP1245 == '5'] <- 1
+df$suicidal[df$GROUP1245 == '1'|df$GROUP1245 == '2'] <- 0
+df$suicidal <- as.factor(df$suicidal)
+
+df$attempting <- NA
+df$attempting[df$GROUP1245 == '5'] <- 1
+df$attempting[df$GROUP1245 == '1'|df$GROUP1245 == '2'|df$GROUP1245 == '4'] <- 0
+df$attempting <- as.factor(df$attempting)
+
+#creating a dataset without HC
+df_noHealthy <- df[df$GROUP1245!='1',]
+View(df_noHealthy)
+
+# correlation tables
+library(corrplot)
+library(data.table)
+chars <- df_noHealthy[,c(19,20,29,30,31,32,33,130,34,35,36,37)]
+corrplot.mixed(cor(chars, method = 'spearman', use = 'na.or.complete'), lower.col = 'black', number.cex = 1.1)
+corrplot(cor(chars, method = 'spearman', use = 'na.or.complete'), number.cex = 1.1)
+
+chars2 <- df_noHealthy[,c(19,20,24,33,130)]
+corrplot.mixed(cor(chars2, method = 'spearman', use = 'na.or.complete'), lower.col = 'black', number.cex = 1.1)
+corrplot(cor(chars2, method = 'spearman', use = 'na.or.complete'), number.cex = 1.1)
+
+#additional models predicting suicidality (attempt + ideation)
+
+#1st degree exposure
+
+# FOR PRESENTATION
+summary(m1_additional_1stdeg_neo1 <- glm(suicidal ~  num1stExposuresSB*NEONEUROTICISM, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_1stdeg_neo1, type = "III")
+
+plot(effect("num1stExposuresSB:NEONEUROTICISM", m1_additional_1stdeg_neo1), grid=TRUE)
+
+summary(m1_additional_1stdeg_neo2 <- glm(suicidal ~  num1stExposuresSB*NEOEXTRAVERSION, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_1stdeg_neo2, type = "III")
+
+summary(m1_additional_1stdeg_neo3 <- glm(suicidal ~  num1stExposuresSB*NEOOPENNESS, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_1stdeg_neo3, type = "III")
+
+plot(effect("num1stExposuresSB:NEOOPENNESS", m1_additional_1stdeg_neo3), grid=TRUE)
+
+summary(m1_additional_1stdeg_BIS <- glm(suicidal ~  num1stExposuresSB*BIS_TOT, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_1stdeg_BIS, type = "III")
+
+#2nd degree exposure
+summary(m1_additional_2nddeg_neo1 <- glm(suicidal ~  num2ndExposuresSB*NEONEUROTICISM, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_2nddeg_neo1, type = "III")
+
+summary(m1_additional_2nddeg_neo2 <- glm(suicidal ~  num2ndExposuresSB*NEOEXTRAVERSION, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_2nddeg_neo2, type = "III")
+
+summary(m1_additional_2nddeg_neo3 <- glm(suicidal ~  num2ndExposuresSB*NEOOPENNESS, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_2nddeg_neo3, type = "III")
+
+summary(m1_additional_2nd_BIS <- glm(suicidal ~  num2ndExposuresSB*BIS_TOT, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_2nd_BIS, type = "III")
+
+# environmental exposure
+summary(m1_additional_Env_neo1 <- glm(suicidal ~  numEnvExposuresSB*NEONEUROTICISM, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Env_neo1, type = "III")
+
+# FOR PRESENTATION
+summary(m1_additional_Env_neo2 <- glm(suicidal ~  numEnvExposuresSB*NEOEXTRAVERSION, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Env_neo2, type = "III")
+
+plot(effect("numEnvExposuresSB:NEOEXTRAVERSION", m1_additional_Env_neo2), grid=TRUE)
+
+summary(m1_additional_Env_neo3 <- glm(suicidal ~  numEnvExposuresSB*NEOOPENNESS, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Env_neo3, type = "III")
+
+summary(m1_additional_Env_BIS <- glm(suicidal ~  numEnvExposuresSB*BIS_TOT, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Env_BIS, type = "III")
+
+#blood exposure
+summary(m1_additional_Rel_neo1 <- glm(suicidal ~  numRelExposuresSB*NEONEUROTICISM, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Rel_neo1, type = "III")
+
+summary(m1_additional_Rel_neo2 <- glm(suicidal ~  numRelExposuresSB*NEOEXTRAVERSION, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Rel_neo2, type = "III")
+
+summary(m1_additional_Rel_neo3 <- glm(suicidal ~  numRelExposuresSB*NEOOPENNESS, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Rel_neo3, type = "III")
+
+#FOR PRESENTATION
+summary(m1_additional_Rel_BIS <- glm(suicidal ~  numRelExposuresSB*BIS_TOT, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Rel_BIS, type = "III")
+
+plot(effect("numRelExposuresSB:BIS_TOT", m1_additional_Rel_BIS), grid=TRUE)
+
+#checking subscales for sanity
+
+summary(m1_additional_Rel_BIS1 <- glm(suicidal ~  numRelExposuresSB*BIS_MOTOR, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Rel_BIS1, type = "III")
+
+summary(m1_additional_Rel_BIS2 <- glm(suicidal ~  numRelExposuresSB*BIS_COGNIT, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Rel_BIS2, type = "III")
+
+summary(m1_additional_Rel_BIS3 <- glm(suicidal ~  numRelExposuresSB*BIS_NONPLAN, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Rel_BIS3, type = "III")
+
+
+# models predicting risk for attempting only
+# blood exposure (just to check the weird finding about the BIS)
+summary(m1_additional2_Rel_neo1 <- glm(attempting ~  numRelExposuresSB*NEONEUROTICISM, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional2_Rel_neo1, type = "III")
+
+summary(m1_additional2_Rel_neo2 <- glm(attempting ~  numRelExposuresSB*NEOEXTRAVERSION, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional2_Rel_neo2, type = "III")
+
+summary(m1_additional2_Rel_neo3 <- glm(attempting ~  numRelExposuresSB*NEOOPENNESS, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional2_Rel_neo3, type = "III")
+
+plot(effect("numRelExposuresSB:NEOOPENNESS", m1_additional2_Rel_neo3), grid=TRUE)
+
+summary(m1_additional2_Rel_BIS <- glm(attempting ~  numRelExposuresSB*BIS_TOT, family = binomial, data = df_noHealthy))
+car::Anova(m1_additional2_Rel_BIS, type = "III")
+
+
+ls10_M1blood <- lsmeans(m10_M1blood, "group_early")
+contrast(ls10_M1blood, method = "pairwise", adjust ="tukey")
+plot(ls10_M1blood, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
+
