@@ -37,7 +37,7 @@ library(compareGroups)
 # library(lattice)
 # library(fastICA)
 # library(plotly)
-library(effect)
+library(effects)
 
 rm(list = ls())
 
@@ -56,9 +56,9 @@ rm(list = ls())
 #setwd("~/Box Sync/skinner/projects_analyses/Project Transmission")
 
 #For Anna:
-setwd("~/Dropbox/USA/Pittsburgh/GitHub/transmission/transmission")
-df <- read_delim("FAMHX_DEMOG_COUNTS_MERGED_10.4.17.csv",
-                 ",", escape_double = FALSE, trim_ws = TRUE)
+#setwd("~/Dropbox/USA/Pittsburgh/GitHub/transmission/transmission")
+#df <- read_delim("FAMHX_DEMOG_COUNTS_MERGED_10.4.17.csv",
+#                ",", escape_double = FALSE, trim_ws = TRUE)
 
 
 #at home
@@ -224,6 +224,11 @@ df$BIS_TOT
 
 save(df, file="trans.Rda")
 
+
+## remove random adopted guy from dataset
+df <- df[df$ID != '217142',]
+df$numRelExposuresSB
+
 ## check if distribution of events roughly fits NB
 
 nbfit <- suppressWarnings(fitdistr(na.omit(d$events), "negative binomial"))
@@ -354,16 +359,17 @@ plot(ls9, horiz = F)
 multcomp::cld(ls9)
 
 
-##FINAL MODEL WITH ENV
 d$rel <- factor(d$rel)
 d$rel <- relevel(d$rel, ref = 'ENV')
+
+##FINAL MODEL WITH ENV
 summary(m10 <- glm(exp ~  group_early*rel + rel*sev + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = d))
 car::Anova(m10, type = "III")
 ls10 <- lsmeans(m10, "group_early")
 contrast(ls10, method = "pairwise", adjust ="tukey")
 plot(ls10, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
 
-#basic model without any demog
+#THE GOOD MODEL!!!!! basic model without any demog
 summary(m10_M1 <- glm(exp ~  group_early*rel + rel*sev + BASELINEAGE*sev + (1:ID), family = binomial, data = d))
 car::Anova(m10_M1, type = "III")
 ls10_M1 <- lsmeans(m10_M1, "group_early")
@@ -533,8 +539,9 @@ theta.resp <- theta.ml(na.omit(dblood1e$events), mean(na.omit(dblood1e$events)),
 #dichotomize exposure in dblood
 dblood$exp <- dblood$events>0
 
-#THIS ONE
-summary(m10blood <- glm(exp ~  group_early + sev + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = dblood))
+#THIS ONE 04.10.18
+#summary(m10blood <- glm(exp ~  group_early + sev + BASELINEAGE*sev +  EDUCATION  + race2lvl + MARITALTEXT + (1:ID), family = binomial, data = dblood))
+summary(m10blood <- glm(exp ~  group_early + sev + BASELINEAGE*sev + (1:ID), family = binomial, data = dblood))
 car::Anova(m10blood, type = "III")
 ls10blood <- lsmeans(m10blood, "group_early")
 contrast(ls10blood, method = "pairwise", adjust ="tukey")
@@ -608,7 +615,7 @@ CLD_blood$group_early <- factor(CLD_blood$group_early, levels = c("Non-psychiatr
 CLD_rel$rel <- factor(CLD_rel$rel, levels = c("ENV","2nd", "1st"))
 
 #plot main figure
-pdf(file = "Main_Figure.pdf", width = 8, height = 6)
+pdf(file = "Main_Figure.m10_M1.pdf", width = 8, height = 6)
 pd = position_dodge(0.8)    ### How much to jitter the points on the plot
 ggplot(CLD,
        aes(x     = group_early,
@@ -771,7 +778,7 @@ dev.off()
 #             nudge_y = c(0.8,  0.8, 0.8,  0.8, 0.8),
 #             color   = "black")
 # dev.off()
-# 
+
 # #plot figure m10blood
 # CLD_blood <- multcomp::cld(ls10blood,
 #                      alpha=0.05,
@@ -779,7 +786,7 @@ dev.off()
 #                      adjust="tukey")
 # CLD_blood$.group=gsub(" ", "", CLD_blood$.group)
 # # CLD$g=c("Non-psychiatric controls", "Non-suicidal depressed", "Suicide ideators", "Early-onset attempters", "Late-onset attempters")
-# pdf(file = "Exposure by group PRETTY.m10blood.pdf", width = 8, height = 6)
+#pdf(file = "Exposure by group PRETTY.finalModelWithEnv.pdf", width = 8, height = 6)
 # pd = position_dodge(0.8)    ### How much to jitter the points on the plot
 # ggplot(CLD,
 #        aes(x     = group_early,
@@ -925,16 +932,18 @@ corrplot(cor(chars2, method = 'spearman', use = 'na.or.complete'), number.cex = 
 
 #1st degree exposure
 
+df_noHealthy$GENDERTEXT <- as.factor(df_noHealthy$GENDERTEXT)
+
 # FOR PRESENTATION
-summary(m1_additional_1stdeg_neo1 <- glm(suicidal ~  num1stExposuresSB*NEONEUROTICISM, family = binomial, data = df_noHealthy))
+summary(m1_additional_1stdeg_neo1 <- glm(suicidal ~  num1stExposuresSB*NEONEUROTICISM + BASELINEAGE + GENDERTEXT + EDUCATION, family = binomial, data = df_noHealthy))
 car::Anova(m1_additional_1stdeg_neo1, type = "III")
 
 plot(effect("num1stExposuresSB:NEONEUROTICISM", m1_additional_1stdeg_neo1), grid=TRUE)
 
-summary(m1_additional_1stdeg_neo2 <- glm(suicidal ~  num1stExposuresSB*NEOEXTRAVERSION, family = binomial, data = df_noHealthy))
+summary(m1_additional_1stdeg_neo2 <- glm(suicidal ~  num1stExposuresSB*NEOEXTRAVERSION + BASELINEAGE + GENDERTEXT, family = binomial, data = df_noHealthy))
 car::Anova(m1_additional_1stdeg_neo2, type = "III")
 
-summary(m1_additional_1stdeg_neo3 <- glm(suicidal ~  num1stExposuresSB*NEOOPENNESS, family = binomial, data = df_noHealthy))
+summary(m1_additional_1stdeg_neo3 <- glm(suicidal ~  num1stExposuresSB*NEOOPENNESS + BASELINEAGE + GENDERTEXT, family = binomial, data = df_noHealthy))
 car::Anova(m1_additional_1stdeg_neo3, type = "III")
 
 plot(effect("num1stExposuresSB:NEOOPENNESS", m1_additional_1stdeg_neo3), grid=TRUE)
@@ -960,7 +969,7 @@ summary(m1_additional_Env_neo1 <- glm(suicidal ~  numEnvExposuresSB*NEONEUROTICI
 car::Anova(m1_additional_Env_neo1, type = "III")
 
 # FOR PRESENTATION
-summary(m1_additional_Env_neo2 <- glm(suicidal ~  numEnvExposuresSB*NEOEXTRAVERSION, family = binomial, data = df_noHealthy))
+summary(m1_additional_Env_neo2 <- glm(suicidal ~  numEnvExposuresSB*NEOEXTRAVERSION + BASELINEAGE + GENDERTEXT + EDUCATION, family = binomial, data = df_noHealthy))
 car::Anova(m1_additional_Env_neo2, type = "III")
 
 plot(effect("numEnvExposuresSB:NEOEXTRAVERSION", m1_additional_Env_neo2), grid=TRUE)
@@ -982,7 +991,7 @@ summary(m1_additional_Rel_neo3 <- glm(suicidal ~  numRelExposuresSB*NEOOPENNESS,
 car::Anova(m1_additional_Rel_neo3, type = "III")
 
 #FOR PRESENTATION
-summary(m1_additional_Rel_BIS <- glm(suicidal ~  numRelExposuresSB*BIS_TOT, family = binomial, data = df_noHealthy))
+summary(m1_additional_Rel_BIS <- glm(suicidal ~  numRelExposuresSB*BIS_TOT + BASELINEAGE + GENDERTEXT + EDUCATION, family = binomial, data = df_noHealthy))
 car::Anova(m1_additional_Rel_BIS, type = "III")
 
 plot(effect("numRelExposuresSB:BIS_TOT", m1_additional_Rel_BIS), grid=TRUE)
@@ -1020,3 +1029,54 @@ ls10_M1blood <- lsmeans(m10_M1blood, "group_early")
 contrast(ls10_M1blood, method = "pairwise", adjust ="tukey")
 plot(ls10_M1blood, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
 
+
+##correlations and plot that Kati wanted to see
+df_onlyAtt <- df[df$GROUP1245 == '5',]
+
+chars3 <- df_onlyAtt[,c(11,12,14,108,114)]
+chars3$numRelExposuresSB <- as.factor(chars3$numRelExposuresSB)
+chars3$numEnvExposuresSB <- as.factor(chars3$numEnvExposuresSB)
+
+
+corrplot.mixed(cor(chars3, method = 'spearman', use = 'na.or.complete'), lower.col = 'black', number.cex = 1.1)
+corrplot(cor(chars3, method = 'spearman', use = 'na.or.complete'), number.cex = 1.1)
+
+
+plot(df_onlyAtt$MAXLETHALITY,df_onlyAtt$numRelExposuresSB, type = 'h', xlab = 'Lethality', ylab = 'Exposure to SB in relatives')
+plot(df_onlyAtt$MAXLETHALITY,df_onlyAtt$numEnvExposuresSB, type = 'h', xlab = 'Lethality', ylab = 'Exposure to SB in relatives')
+
+
+plot(df_onlyAtt$AGEATFIRSTATTEMPT,df_onlyAtt$numRelExposuresSB, type = 'h', xlab = 'Age of onset', ylab = 'Exposure to SB in relatives')
+plot(df_onlyAtt$AGEATFIRSTATTEMPT,df_onlyAtt$numEnvExposuresSB, type = 'h', xlab = 'Age of onset', ylab = 'Exposure to SB in non-relatives')
+
+plot(df_onlyAtt$TOTALATTEMPTS,df_onlyAtt$numRelExposuresSB, type = 'h', xlab = 'Number of attempts', ylab = 'Exposure to SB in relatives')
+plot(df_onlyAtt$TOTALATTEMPTS,df_onlyAtt$numEnvExposuresSB, type = 'h', xlab = 'Number of attempts', ylab = 'Exposure to SB in non-relatives')
+
+histogram(df_onlyAtt$AGEATFIRSTATTEMPT, df_onlyAtt$numEnvExposuresSB)
+
+library(ggplot2)
+dev.off()
+g <- ggplot(chars3, aes(AGEATFIRSTATTEMPT))
+g + theme_set(theme_classic())
++ geom_density(aes(fill=numRelExposuresSB), alpha=0.8) + 
+  labs(title="Histogram by exposure", 
+       subtitle="Age of onset of 1st attempt",
+       x="Age at 1st attempt",
+       fill="Number of family exposures")
+
+
+g <- ggplot(chars3, aes(AGEATFIRSTATTEMPT))
+g + geom_bar(aes(fill=numRelExposuresSB), width = 1) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+  labs(title="Family exposures by age of onset",
+       x="Age at 1st attempt",
+       fill="Family exposures") +
+  scale_fill_manual(values=c("grey80", "orchid1", "orchid3", "orchid4"))
+
+g1 <- ggplot(chars3, aes(AGEATFIRSTATTEMPT))
+g1 + geom_bar(aes(fill=numEnvExposuresSB), width = 1) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+  labs(title="Environmental exposures by age of onset",
+       x="Age at 1st attempt",
+       fill="Environmental exposures") +
+  scale_fill_manual(values=c("grey80","turquoise1", "turquoise2", "turquoise3", "turquoise4"))
