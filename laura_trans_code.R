@@ -361,13 +361,7 @@ vif(m9)
 
 d$rel <- factor(d$rel)
 d$rel <- relevel(d$rel, ref = 'ENV')
-<<<<<<< HEAD
 summary(m10 <- glm(exp ~  group_early*rel + rel*sev + scale(BASELINEAGE)*sev +  scale(EDUCATION)  + race2lvl + (1:ID), family = binomial, data = d))
-=======
-
-##FINAL MODEL WITH ENV
-summary(m10 <- glm(exp ~  group_early*rel + rel*sev + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = d))
->>>>>>> origin/master
 car::Anova(m10, type = "III")
 ls10 <- lsmeans(m10, "group_early")
 contrast(ls10, method = "pairwise", adjust ="tukey")
@@ -375,11 +369,15 @@ plot(ls10, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior"
 vif(m10)
 
 #THE GOOD MODEL!!!!! basic model without any demog
-summary(m10_M1 <- glm(exp ~  group_early*rel + rel*sev + BASELINEAGE*sev + (1:ID), family = binomial, data = d))
+summary(m10_M1 <- glm(exp ~  group_early*rel + rel*sev + scale(BASELINEAGE)*sev + (1:ID), family = binomial, data = d))
 car::Anova(m10_M1, type = "III")
 ls10_M1 <- lsmeans(m10_M1, "group_early")
 contrast(ls10_M1, method = "pairwise", adjust ="tukey")
 plot(ls10_M1, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
+
+# AD: a nice new way to visualize model coefficients
+library(sjPlot)
+plot_model(m10_M1, show.p = TRUE, show.values = TRUE)
 
 #re-running m10_M1 with blood instead of rel for the multi panel figure
 summary(m10_M1blood <- glm(exp ~  group_early*blood + blood*sev + BASELINEAGE*sev + (1:ID), family = binomial, data = d))
@@ -416,6 +414,10 @@ ggplot(adf[!adf$numEnvExposuresSB=='NA',], aes(x = numEnvExposuresSB>1, y = AGEA
 
 ggplot(adf, aes(x = AGEATFIRSTATTEMPT, y = numEnvExposuresSB>0, color = numEnvExposuresSB>0)) + geom_jitter()
 
+
+# environmental only
+
+m_env <- glm(numEnvExposuresSB>0 ~  group_early + BASELINEAGE + race2lvl + EDUCATION + GENDERTEXT + marital2lvl, family = binomial, data = df)
 
 # # do not worry about this interaction plot -- just did it to rule out familial clustering once and for all
 # ls10a <- lsmeans(m10, "group_early", by = "rel")
