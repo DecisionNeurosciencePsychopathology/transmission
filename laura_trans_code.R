@@ -417,7 +417,8 @@ ggplot(adf, aes(x = AGEATFIRSTATTEMPT, y = numEnvExposuresSB>0, color = numEnvEx
 
 # environmental only
 
-m_env <- glm(numEnvExposuresSB>0 ~  group_early + BASELINEAGE + race2lvl + EDUCATION + GENDERTEXT + marital2lvl, family = binomial, data = df)
+summary(m_env <- glm(numEnvExposuresSB>0 ~  group_early + BASELINEAGE + race2lvl + EDUCATION + GENDERTEXT + marital2lvl, family = binomial, data = df))
+plot_model(m_env)
 
 # # do not worry about this interaction plot -- just did it to rule out familial clustering once and for all
 # ls10a <- lsmeans(m10, "group_early", by = "rel")
@@ -953,7 +954,11 @@ corrplot(cor(chars2, method = 'spearman', use = 'na.or.complete'), number.cex = 
 df_noHealthy$GENDERTEXT <- as.factor(df_noHealthy$GENDERTEXT)
 
 # FOR PRESENTATION
-summary(m1_additional_1stdeg_neo1 <- glm(suicidal ~  num1stExposuresSB*NEONEUROTICISM + BASELINEAGE + GENDERTEXT + EDUCATION, family = binomial, data = df_noHealthy))
+summary(m1_additional_1stdeg_demo <- glm(suicidal ~  I(numEnvExposuresSB>0) * IIP15INTAMBV + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_1stdeg_demo, type = "III")
+vif(m1_additional_1stdeg_demo)
+
+summary(m1_additional_1stdeg_neo1 <- glm(suicidal ~  I(num1stExposuresSB>0)*NEONEUROTICISM + BASELINEAGE + GENDERTEXT + EDUCATION, family = binomial, data = df_noHealthy))
 car::Anova(m1_additional_1stdeg_neo1, type = "III")
 
 plot(effect("num1stExposuresSB:NEONEUROTICISM", m1_additional_1stdeg_neo1), grid=TRUE)
