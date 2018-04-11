@@ -346,22 +346,23 @@ multcomp::cld(ls6a)
 
 # dichotomize exposure
 d$exp <- d$events>0
-summary(m9 <- glm(exp ~  group_early*sev +group_early*blood + BASELINEAGE*sev +  EDUCATION  + race2lvl  + (1:ID), family = binomial, data = d))
+summary(m9 <- glm(exp ~  group_early*sev +group_early*blood + scale(BASELINEAGE)*sev +  scale(EDUCATION)  + race2lvl  + (1:ID), family = binomial, data = d))
 car::Anova(m9, type = "III")
 lsmip(m9,  sev ~ group_early |blood, ylab = "log(response rate)", xlab = "type ", type = "predicted" )
 ls9 <- lsmeans(m9, "group_early", by = "blood")
 plot(ls9, horiz = F)
 multcomp::cld(ls9)
-
+vif(m9)
 
 ##FINAL MODEL WITH ENV
 d$rel <- factor(d$rel)
 d$rel <- relevel(d$rel, ref = 'ENV')
-summary(m10 <- glm(exp ~  group_early*rel + rel*sev + BASELINEAGE*sev +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = d))
+summary(m10 <- glm(exp ~  group_early*rel + rel*sev + scale(BASELINEAGE)*sev +  scale(EDUCATION)  + race2lvl + (1:ID), family = binomial, data = d))
 car::Anova(m10, type = "III")
 ls10 <- lsmeans(m10, "group_early")
 contrast(ls10, method = "pairwise", adjust ="tukey")
 plot(ls10, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
+vif(m10)
 
 #basic model without any demog
 summary(m10_M1 <- glm(exp ~  group_early*rel + rel*sev + BASELINEAGE*sev + (1:ID), family = binomial, data = d))
@@ -393,6 +394,17 @@ car::Anova(m10_M3, type = "III")
 ls10_M3 <- lsmeans(m10_M3, "group_early")
 contrast(ls10_M3, method = "pairwise", adjust ="tukey")
 plot(ls10_M3, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
+
+
+adf <- df[df$GROUP1245==5,]
+
+ggplot(adf[!adf$bloodSB=='NA',], aes(x = AGEATFIRSTATTEMPT, y = bloodSB, color = bloodSB)) + geom_jitter()
+
+ggplot(adf[!adf$bloodSB=='NA',], aes(x = bloodSB, y = AGEATFIRSTATTEMPT, color = bloodSB)) + geom_boxplot()
+ggplot(adf[!adf$numEnvExposuresSB=='NA',], aes(x = numEnvExposuresSB>1, y = AGEATFIRSTATTEMPT, color = numEnvExposuresSB>1)) + geom_boxplot()
+
+
+ggplot(adf, aes(x = AGEATFIRSTATTEMPT, y = numEnvExposuresSB>0, color = numEnvExposuresSB>0)) + geom_jitter()
 
 
 # # do not worry about this interaction plot -- just did it to rule out familial clustering once and for all
