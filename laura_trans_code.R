@@ -3,12 +3,11 @@
 # describe(df$ENVRNMTL)
 # unique(df$ENVRNMTL)
 
-#install.packages(c("car","readr", "lme4", "ggplot2", "tidyr", "psych", "gdata", "xtable", "Hmisc", "nnet", 
-#"reshape2", "corrplot", "lsmeans", "readxl", "MASS", "stargazer", "compareGroups", "multcompView","RColorBrewer","VIM"))
-
+#install.packages(c("car","readr", "lme4", "ggplot2", "tidyr", "psych", "gdata", "xtable", "Hmisc", "nnet", "reshape2", "corrplot", "lsmeans", "readxl", "MASS", "stargazer", "compareGroups", "multcompView","RColorBrewer","VIM"))
 #install.packages("fifer")
-#library(fifer)
 
+library(fifer)
+library(sjPlot)
 library(RColorBrewer)
 library(multcompView)
 library (car)
@@ -958,8 +957,22 @@ summary(m1_additional_1stdeg_demo <- glm(suicidal ~  I(numEnvExposuresSB>0) * II
 car::Anova(m1_additional_1stdeg_demo, type = "III")
 vif(m1_additional_1stdeg_demo)
 
-summary(m1_additional_1stdeg_neo1 <- glm(suicidal ~  I(num1stExposuresSB>0)*NEONEUROTICISM + BASELINEAGE + GENDERTEXT + EDUCATION, family = binomial, data = df_noHealthy))
+summary(m1_additional_1stdeg_neo1 <- glm(suicidal ~  I(num1stExposuresSB>0)*NEONEUROTICISM + BASELINEAGE + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
 car::Anova(m1_additional_1stdeg_neo1, type = "III")
+vif(m1_additional_1stdeg_neo1)
+
+summary(m1_additional_1stdeg_neo2 <- glm(suicidal ~  I(num1stExposuresSB>0)*NEOEXTRAVERSION + BASELINEAGE + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_1stdeg_neo2, type = "III")
+vif(m1_additional_1stdeg_neo2)
+
+summary(m1_additional_1stdeg_neo3 <- glm(suicidal ~  I(num1stExposuresSB>0)*NEOOPENNESS + BASELINEAGE + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_1stdeg_neo3, type = "III")
+vif(m1_additional_1stdeg_neo3)
+
+
+
+
+
 
 plot(effect("num1stExposuresSB:NEONEUROTICISM", m1_additional_1stdeg_neo1), grid=TRUE)
 
