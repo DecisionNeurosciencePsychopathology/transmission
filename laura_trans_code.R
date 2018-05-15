@@ -378,6 +378,69 @@ plot(ls10_M1, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavi
 library(sjPlot)
 plot_model(m10_M1, show.p = TRUE, show.values = TRUE)
 
+
+
+v1 <- c("Lagged decision time", "Trial", "Stay vs. switch",  "Exploratory choice", 
+        
+        "Controls vs. attempters", "Depressed vs. attempters", "Ideators vs. attempters", 
+        
+        "Reward","Reward * Absolute PE", "Reward * Controls vs attempters", "Reward * Depressed vs attempters", "Reward * Ideators vs attempters",
+        
+        "Absolute prediction error (PE)", "Absolute PE * Controls vs attempters", "Absolute PE * Depressed vs attempters", "Absolute PE * Ideators vs attempters",
+        
+        "Max value","Max value * Controls vs attempters", "Max value * Depressed vs attempters", "Max value * Ideators vs attempters")
+
+model_terms1 <- labels(terms(s11_rt))
+
+
+
+s11 <- summary(s11_rt_std)
+
+coef11 <- s11$coefficients
+
+terms11 <- labels(coef11)[[1]]
+
+terms11[2:21]
+
+# term groups: 1 - nuisance, 2 - reward, 3 - PE, 4 - value
+
+
+
+
+
+s12 <- summary(s12_rt_std)
+
+coef12 <- s12$coefficients
+
+terms12 <- labels(coef12)[[1]]
+
+
+
+s22 <- summary(s22_rt_std)
+
+coef22 <- s22$coefficients
+
+terms22 <- labels(coef22)[[1]]
+
+
+
+
+
+
+
+p1 <- plot_model(s11_rt_std,  p.kr = FALSE, terms = terms11, order.terms = c(20:18,10,17:15,6,14:12,11,4,9:7,5,3:1),
+                 
+                 show.p = TRUE, show.values = TRUE,  group.terms = c(1,1,1,2,1,3,1,1,1,4,2,2,2,2,3,3,3,4,4,4),vline.color = "slategray3",
+                 
+                 axis.labels = v1,axis.title = "Slower  < - >  Faster", value.offset = 0.4,colors = c( "gray47", "red3", "green4", "navy"),
+                 
+                 title = "Sample 1, Experiment 1")
+
+
+
+p1 <- p1 + theme(axis.text.y = element_text(color = "black"))
+
+
 #re-running m10_M1 with blood instead of rel for the multi panel figure
 summary(m10_M1blood <- glm(exp ~  group_early*blood + blood*sev + BASELINEAGE*sev + (1:ID), family = binomial, data = d))
 car::Anova(m10_M1blood, type = "III")
@@ -957,7 +1020,7 @@ summary(m1_additional_1stdeg_demo <- glm(suicidal ~  I(numEnvExposuresSB>0) * II
 car::Anova(m1_additional_1stdeg_demo, type = "III")
 vif(m1_additional_1stdeg_demo)
 
-summary(m1_additional_1stdeg_neo1 <- glm(suicidal ~  I(num1stExposuresSB>0)*NEONEUROTICISM + BASELINEAGE + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+summary(m1_additional_1stdeg_neo1 <- glm(suicidal ~  I(num1stExposuresSB>0)*scale(NEONEUROTICISM) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
 car::Anova(m1_additional_1stdeg_neo1, type = "III")
 vif(m1_additional_1stdeg_neo1)
 
