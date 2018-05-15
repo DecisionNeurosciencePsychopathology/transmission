@@ -194,10 +194,11 @@ df <- as.data.frame(df)
 
 d = melt(df, na.rm = FALSE, measure.vars = c("num1stExposuresSC","num1stExposuresSA", "num2ndExposuresSC", "num2ndExposuresSA", "numEnvExposuresSC", "numEnvExposuresSA"))
 
-d$group_early <- relevel(d$group_early, ref = c("Non-suicidal\ndepressed"))
+# change reference group to something else
+#d$group_early <- relevel(d$group_early, ref = c("Non-suicidal\ndepressed"))
 
 # resetting the group order for the figures
-# d$group_early <- factor(d$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
+ d$group_early <- factor(d$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
 
 # discard the stupid variables
 
@@ -380,59 +381,30 @@ plot_model(m10_M1, show.p = TRUE, show.values = TRUE)
 
 
 
-v1 <- c("Lagged decision time", "Trial", "Stay vs. switch",  "Exploratory choice", 
-        
-        "Controls vs. attempters", "Depressed vs. attempters", "Ideators vs. attempters", 
-        
-        "Reward","Reward * Absolute PE", "Reward * Controls vs attempters", "Reward * Depressed vs attempters", "Reward * Ideators vs attempters",
-        
-        "Absolute prediction error (PE)", "Absolute PE * Controls vs attempters", "Absolute PE * Depressed vs attempters", "Absolute PE * Ideators vs attempters",
-        
-        "Max value","Max value * Controls vs attempters", "Max value * Depressed vs attempters", "Max value * Ideators vs attempters")
+# v1 <- c("Lagged decision time", "Trial", "Stay vs. switch",  "Exploratory choice", 
+#         "Controls vs. attempters", "Depressed vs. attempters", "Ideators vs. attempters", 
+#         "Reward","Reward * Absolute PE", "Reward * Controls vs attempters", "Reward * Depressed vs attempters", "Reward * Ideators vs attempters",
+#         "Absolute prediction error (PE)", "Absolute PE * Controls vs attempters", "Absolute PE * Depressed vs attempters", "Absolute PE * Ideators vs attempters",
+#         "Max value","Max value * Controls vs attempters", "Max value * Depressed vs attempters", "Max value * Ideators vs attempters")
 
-model_terms1 <- labels(terms(s11_rt))
+model_terms1 <- labels(terms(m10_M1))
 
 
 
-s11 <- summary(s11_rt_std)
+s11 <- summary(m10_M1)
 
 coef11 <- s11$coefficients
 
 terms11 <- labels(coef11)[[1]]
 
-terms11[2:21]
-
-# term groups: 1 - nuisance, 2 - reward, 3 - PE, 4 - value
+terms11 <- terms11[2:20]
 
 
-
-
-
-s12 <- summary(s12_rt_std)
-
-coef12 <- s12$coefficients
-
-terms12 <- labels(coef12)[[1]]
-
-
-
-s22 <- summary(s22_rt_std)
-
-coef22 <- s22$coefficients
-
-terms22 <- labels(coef22)[[1]]
-
-
-
-
-
-
-
-p1 <- plot_model(s11_rt_std,  p.kr = FALSE, terms = terms11, order.terms = c(20:18,10,17:15,6,14:12,11,4,9:7,5,3:1),
+p1 <- plot_model(m10_M1,  p.kr = FALSE, terms = terms11, order.terms = c(1:4,5,6,9:16,7,17:18,8,19),
                  
-                 show.p = TRUE, show.values = TRUE,  group.terms = c(1,1,1,2,1,3,1,1,1,4,2,2,2,2,3,3,3,4,4,4),vline.color = "slategray3",
+                 show.p = TRUE, show.values = TRUE,  group.terms = c(4,4,4,4,3,3,2,2,2,2,1,1,1,1,5,6,6,7,8),vline.color = "slategray3",
                  
-                 axis.labels = v1,axis.title = "Slower  < - >  Faster", value.offset = 0.4,colors = c( "gray47", "red3", "green4", "navy"),
+                 axis.labels = terms11, axis.title = "Slower  < - >  Faster", value.offset = 0.4,colors = c( "plum", "turquoise", "green4", "navy", "green", "yellow", "orchid", "green1"),
                  
                  title = "Sample 1, Experiment 1")
 
@@ -630,6 +602,8 @@ multcomp::cld(ls10blood, sort = FALSE)
 plot(ls10blood, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
 
 #STARGAZER COMPARING FINAL MODELS AND SENSITIVITY ANALYSES
+stargazer(m1_additional_Reldeg_BIS, m1_additional_Envdeg_BIS, type="html", out="trans_impulsivity.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
+stargazer( m1_additional_Reldeg_neo3, m1_additional_Envdeg_neo3, type="html", out="trans_personality.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
 stargazer(m10blood, type="html", out="trans_blood.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
 stargazer(m10_M1,m10_M2,m10_M3, type="html", out="trans_sensitivity.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
 # dep.var.labels=c("Exposures"), covariate.labels=c("Non-psychiatric Controls","Ideators","Early-onset Attempters","Late-onset Attempters", 
@@ -982,7 +956,7 @@ export2html(tc2, "Table1.kati2.html")
 # cld(lsmeans(tam1, "group_early_no_break"))
 # 
 
-###### additional analysis ######
+###### additional analyses ######
 # creating new variables
 df$suicidal <- NA
 df$suicidal[df$GROUP1245 == '4'|df$GROUP1245 == '5'] <- 1
@@ -1015,96 +989,127 @@ corrplot(cor(chars2, method = 'spearman', use = 'na.or.complete'), number.cex = 
 
 df_noHealthy$GENDERTEXT <- as.factor(df_noHealthy$GENDERTEXT)
 
-# FOR PRESENTATION
-summary(m1_additional_1stdeg_demo <- glm(suicidal ~  I(numEnvExposuresSB>0) * IIP15INTAMBV + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
-car::Anova(m1_additional_1stdeg_demo, type = "III")
-vif(m1_additional_1stdeg_demo)
+# PERSONALITY ZONE
+#1st degree
+summary(m1_additional_1stdeg_IIP <- glm(suicidal ~  I(num1stExposuresSB>0) * scale(IIP15INTAMBV) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_1stdeg_IIP, type = "III")
+vif(m1_additional_1stdeg_IIP)
 
 summary(m1_additional_1stdeg_neo1 <- glm(suicidal ~  I(num1stExposuresSB>0)*scale(NEONEUROTICISM) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
 car::Anova(m1_additional_1stdeg_neo1, type = "III")
 vif(m1_additional_1stdeg_neo1)
 
-summary(m1_additional_1stdeg_neo2 <- glm(suicidal ~  I(num1stExposuresSB>0)*NEOEXTRAVERSION + BASELINEAGE + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+summary(m1_additional_1stdeg_neo2 <- glm(suicidal ~  I(num1stExposuresSB>0)*scale(NEOEXTRAVERSION) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
 car::Anova(m1_additional_1stdeg_neo2, type = "III")
 vif(m1_additional_1stdeg_neo2)
 
-summary(m1_additional_1stdeg_neo3 <- glm(suicidal ~  I(num1stExposuresSB>0)*NEOOPENNESS + BASELINEAGE + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+summary(m1_additional_1stdeg_neo3 <- glm(suicidal ~  I(num1stExposuresSB>0)*scale(NEOOPENNESS) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
 car::Anova(m1_additional_1stdeg_neo3, type = "III")
 vif(m1_additional_1stdeg_neo3)
 
+summary(m1_additional_1stdeg_neo4 <- glm(suicidal ~  I(num1stExposuresSB>0)*scale(NEOAGREEABLENESS) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_1stdeg_neo4, type = "III")
+vif(m1_additional_1stdeg_neo4)
 
+summary(m1_additional_1stdeg_neo5 <- glm(suicidal ~  I(num1stExposuresSB>0)*scale(NEOCONSCIENTIOUSNESS) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_1stdeg_neo5, type = "III")
+vif(m1_additional_1stdeg_neo5)
 
-
-
-
-plot(effect("num1stExposuresSB:NEONEUROTICISM", m1_additional_1stdeg_neo1), grid=TRUE)
-
-summary(m1_additional_1stdeg_neo2 <- glm(suicidal ~  num1stExposuresSB*NEOEXTRAVERSION + BASELINEAGE + GENDERTEXT, family = binomial, data = df_noHealthy))
-car::Anova(m1_additional_1stdeg_neo2, type = "III")
-
-summary(m1_additional_1stdeg_neo3 <- glm(suicidal ~  num1stExposuresSB*NEOOPENNESS + BASELINEAGE + GENDERTEXT, family = binomial, data = df_noHealthy))
-car::Anova(m1_additional_1stdeg_neo3, type = "III")
-
-plot(effect("num1stExposuresSB:NEOOPENNESS", m1_additional_1stdeg_neo3), grid=TRUE)
-
-summary(m1_additional_1stdeg_BIS <- glm(suicidal ~  num1stExposuresSB*BIS_TOT, family = binomial, data = df_noHealthy))
+summary(m1_additional_1stdeg_BIS <- glm(suicidal ~  I(num1stExposuresSB>0)*scale(BIS_TOT) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
 car::Anova(m1_additional_1stdeg_BIS, type = "III")
+vif(m1_additional_1stdeg_BIS)
 
-#2nd degree exposure
-summary(m1_additional_2nddeg_neo1 <- glm(suicidal ~  num2ndExposuresSB*NEONEUROTICISM, family = binomial, data = df_noHealthy))
+
+#2nd degree
+summary(m1_additional_2nddeg_demo <- glm(suicidal ~  I(num2ndExposuresSB>0) * IIP15INTAMBV + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_2nddeg_demo, type = "III")
+vif(m1_additional_2nddeg_demo)
+
+summary(m1_additional_2nddeg_neo1 <- glm(suicidal ~  I(num2ndExposuresSB>0)*scale(NEONEUROTICISM) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
 car::Anova(m1_additional_2nddeg_neo1, type = "III")
+vif(m1_additional_2nddeg_neo1)
 
-summary(m1_additional_2nddeg_neo2 <- glm(suicidal ~  num2ndExposuresSB*NEOEXTRAVERSION, family = binomial, data = df_noHealthy))
+summary(m1_additional_2nddeg_neo2 <- glm(suicidal ~  I(num2ndExposuresSB>0)*scale(NEOEXTRAVERSION) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
 car::Anova(m1_additional_2nddeg_neo2, type = "III")
+vif(m1_additional_2nddeg_neo2)
 
-summary(m1_additional_2nddeg_neo3 <- glm(suicidal ~  num2ndExposuresSB*NEOOPENNESS, family = binomial, data = df_noHealthy))
+summary(m1_additional_2nddeg_neo3 <- glm(suicidal ~  I(num2ndExposuresSB>0)*scale(NEOOPENNESS) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
 car::Anova(m1_additional_2nddeg_neo3, type = "III")
+vif(m1_additional_2nddeg_neo3)
 
-summary(m1_additional_2nd_BIS <- glm(suicidal ~  num2ndExposuresSB*BIS_TOT, family = binomial, data = df_noHealthy))
-car::Anova(m1_additional_2nd_BIS, type = "III")
+summary(m1_additional_2nddeg_neo4 <- glm(suicidal ~  I(num2ndExposuresSB>0)*scale(NEOAGREEABLENESS) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_2nddeg_neo4, type = "III")
+vif(m1_additional_2nddeg_neo4)
 
-# environmental exposure
-summary(m1_additional_Env_neo1 <- glm(suicidal ~  numEnvExposuresSB*NEONEUROTICISM, family = binomial, data = df_noHealthy))
-car::Anova(m1_additional_Env_neo1, type = "III")
+summary(m1_additional_2nddeg_neo5 <- glm(suicidal ~  I(num2ndExposuresSB>0)*scale(NEOCONSCIENTIOUSNESS) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_2nddeg_neo5, type = "III")
+vif(m1_additional_2nddeg_neo5)
 
-# FOR PRESENTATION
-summary(m1_additional_Env_neo2 <- glm(suicidal ~  numEnvExposuresSB*NEOEXTRAVERSION + BASELINEAGE + GENDERTEXT + EDUCATION, family = binomial, data = df_noHealthy))
-car::Anova(m1_additional_Env_neo2, type = "III")
+summary(m1_additional_2nddeg_BIS <- glm(suicidal ~  I(num2ndExposuresSB>0)*scale(BIS_TOT) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_2nddeg_BIS, type = "III")
+vif(m1_additional_2nddeg_BIS)
 
-plot(effect("numEnvExposuresSB:NEOEXTRAVERSION", m1_additional_Env_neo2), grid=TRUE)
 
-summary(m1_additional_Env_neo3 <- glm(suicidal ~  numEnvExposuresSB*NEOOPENNESS, family = binomial, data = df_noHealthy))
-car::Anova(m1_additional_Env_neo3, type = "III")
+#env
+summary(m1_additional_Envdeg_demo <- glm(suicidal ~  I(numEnvExposuresSB>0) * IIP15INTAMBV + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Envdeg_demo, type = "III")
+vif(m1_additional_Envdeg_demo)
 
-summary(m1_additional_Env_BIS <- glm(suicidal ~  numEnvExposuresSB*BIS_TOT, family = binomial, data = df_noHealthy))
-car::Anova(m1_additional_Env_BIS, type = "III")
+summary(m1_additional_Envdeg_neo1 <- glm(suicidal ~  I(numEnvExposuresSB>0)*scale(NEONEUROTICISM) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Envdeg_neo1, type = "III")
+vif(m1_additional_Envdeg_neo1)
 
-#blood exposure
-summary(m1_additional_Rel_neo1 <- glm(suicidal ~  numRelExposuresSB*NEONEUROTICISM, family = binomial, data = df_noHealthy))
-car::Anova(m1_additional_Rel_neo1, type = "III")
+summary(m1_additional_Envdeg_neo2 <- glm(suicidal ~  I(numEnvExposuresSB>0)*scale(NEOEXTRAVERSION) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Envdeg_neo2, type = "III")
+vif(m1_additional_Envdeg_neo2)
 
-summary(m1_additional_Rel_neo2 <- glm(suicidal ~  numRelExposuresSB*NEOEXTRAVERSION, family = binomial, data = df_noHealthy))
-car::Anova(m1_additional_Rel_neo2, type = "III")
+summary(m1_additional_Envdeg_neo3 <- glm(suicidal ~  I(numEnvExposuresSB>0)*scale(NEOOPENNESS) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Envdeg_neo3, type = "III")
+vif(m1_additional_Envdeg_neo3)
 
-summary(m1_additional_Rel_neo3 <- glm(suicidal ~  numRelExposuresSB*NEOOPENNESS, family = binomial, data = df_noHealthy))
-car::Anova(m1_additional_Rel_neo3, type = "III")
+summary(m1_additional_Envdeg_neo4 <- glm(suicidal ~  I(numEnvExposuresSB>0)*scale(NEOAGREEABLENESS) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Envdeg_neo4, type = "III")
+vif(m1_additional_Envdeg_neo4)
 
-#FOR PRESENTATION
-summary(m1_additional_Rel_BIS <- glm(suicidal ~  numRelExposuresSB*BIS_TOT + BASELINEAGE + GENDERTEXT + EDUCATION, family = binomial, data = df_noHealthy))
-car::Anova(m1_additional_Rel_BIS, type = "III")
+summary(m1_additional_Envdeg_neo5 <- glm(suicidal ~  I(numEnvExposuresSB>0)*scale(NEOCONSCIENTIOUSNESS) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Envdeg_neo5, type = "III")
+vif(m1_additional_Envdeg_neo5)
 
-plot(effect("numRelExposuresSB:BIS_TOT", m1_additional_Rel_BIS), grid=TRUE)
+summary(m1_additional_Envdeg_BIS <- glm(suicidal ~  I(numEnvExposuresSB>0)*scale(BIS_TOT) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Envdeg_BIS, type = "III")
+vif(m1_additional_Envdeg_BIS)
 
-#checking subscales for sanity
 
-summary(m1_additional_Rel_BIS1 <- glm(suicidal ~  numRelExposuresSB*BIS_MOTOR, family = binomial, data = df_noHealthy))
-car::Anova(m1_additional_Rel_BIS1, type = "III")
+#blood
+summary(m1_additional_Reldeg_demo <- glm(suicidal ~  I(numRelExposuresSB>0) * IIP15INTAMBV + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Reldeg_demo, type = "III")
+vif(m1_additional_Reldeg_demo)
 
-summary(m1_additional_Rel_BIS2 <- glm(suicidal ~  numRelExposuresSB*BIS_COGNIT, family = binomial, data = df_noHealthy))
-car::Anova(m1_additional_Rel_BIS2, type = "III")
+summary(m1_additional_Reldeg_neo1 <- glm(suicidal ~  I(numRelExposuresSB>0)*scale(NEONEUROTICISM) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Reldeg_neo1, type = "III")
+vif(m1_additional_Reldeg_neo1)
 
-summary(m1_additional_Rel_BIS3 <- glm(suicidal ~  numRelExposuresSB*BIS_NONPLAN, family = binomial, data = df_noHealthy))
-car::Anova(m1_additional_Rel_BIS3, type = "III")
+summary(m1_additional_Reldeg_neo2 <- glm(suicidal ~  I(numRelExposuresSB>0)*scale(NEOEXTRAVERSION) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Reldeg_neo2, type = "III")
+vif(m1_additional_Reldeg_neo2)
+
+summary(m1_additional_Reldeg_neo3 <- glm(suicidal ~  I(numRelExposuresSB>0)*scale(NEOOPENNESS) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Reldeg_neo3, type = "III")
+vif(m1_additional_Reldeg_neo3)
+plot(effect("I(numRelExposuresSB > 0):scale(NEOOPENNESS)", m1_additional_Reldeg_neo3), grid=TRUE)
+
+summary(m1_additional_Reldeg_neo4 <- glm(suicidal ~  I(numRelExposuresSB>0)*scale(NEOAGREEABLENESS) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Reldeg_neo4, type = "III")
+vif(m1_additional_Reldeg_neo4)
+
+summary(m1_additional_Reldeg_neo5 <- glm(suicidal ~  I(numRelExposuresSB>0)*scale(NEOCONSCIENTIOUSNESS) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Reldeg_neo5, type = "III")
+vif(m1_additional_Reldeg_neo5)
+
+summary(m1_additional_Reldeg_BIS <- glm(suicidal ~  I(numRelExposuresSB>0)*scale(BIS_TOT) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_noHealthy))
+car::Anova(m1_additional_Reldeg_BIS, type = "III")
+vif(m1_additional_Reldeg_BIS)
+plot(effect("I(numRelExposuresSB > 0):scale(BIS_TOT)", m1_additional_Reldeg_BIS), grid=TRUE)
 
 
 # models predicting risk for attempting only
@@ -1117,12 +1122,10 @@ car::Anova(m1_additional2_Rel_neo2, type = "III")
 
 summary(m1_additional2_Rel_neo3 <- glm(attempting ~  numRelExposuresSB*NEOOPENNESS, family = binomial, data = df_noHealthy))
 car::Anova(m1_additional2_Rel_neo3, type = "III")
-
 plot(effect("numRelExposuresSB:NEOOPENNESS", m1_additional2_Rel_neo3), grid=TRUE)
 
 summary(m1_additional2_Rel_BIS <- glm(attempting ~  numRelExposuresSB*BIS_TOT, family = binomial, data = df_noHealthy))
 car::Anova(m1_additional2_Rel_BIS, type = "III")
-
 
 ls10_M1blood <- lsmeans(m10_M1blood, "group_early")
 contrast(ls10_M1blood, method = "pairwise", adjust ="tukey")
