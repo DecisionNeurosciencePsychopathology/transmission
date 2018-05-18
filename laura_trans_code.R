@@ -3,8 +3,10 @@
 # describe(df$ENVRNMTL)
 # unique(df$ENVRNMTL)
 
-#install.packages(c("car","readr", "lme4", "ggplot2", "tidyr", "psych", "gdata", "xtable", "Hmisc", "nnet", "reshape2", "corrplot", "lsmeans", "readxl", "MASS", "stargazer", "compareGroups", "multcompView","RColorBrewer","VIM"))
-#install.packages("fifer")
+# install.packages(c("car","readr", "lme4", "ggplot2", "tidyr", "psych", "gdata", "xtable", 
+#                    "Hmisc", "nnet", "reshape2", "corrplot", "lsmeans", "readxl", "MASS", 
+#                    "stargazer", "compareGroups", "multcompView","RColorBrewer","VIM","fifer"))
+# 
 
 library(fifer)
 library(sjPlot)
@@ -410,24 +412,24 @@ plot(ls10_M1, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavi
 
 
 #re-running m10_M1 with blood instead of rel for the multi panel figure
-summary(m10_M1blood <- glm(exp ~  group_early*blood + blood*sev + BASELINEAGE*sev + (1:ID), family = binomial, data = d))
+summary(m10_M1blood <- glm(exp ~  group_early*blood + blood*sev + scale(BASELINEAGE)*sev + (1:ID), family = binomial, data = d))
 car::Anova(m10_M1blood, type = "III")
 ls10_M1blood <- lsmeans(m10_M1blood, "group_early")
 contrast(ls10_M1blood, method = "pairwise", adjust ="tukey")
 plot(ls10_M1blood, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
 
 #demog sensitivity
-summary(m10_M2 <- glm(exp ~  group_early*rel + rel*sev + BASELINEAGE*sev + race2lvl + EDUCATION + GENDERTEXT + marital2lvl + (1:ID), family = binomial, data = d))
+summary(m10_M2 <- glm(exp ~  group_early*rel + rel*sev + scale(BASELINEAGE)*sev + race2lvl + EDUCATION + GENDERTEXT + marital2lvl + (1:ID), family = binomial, data = d))
 car::Anova(m10_M2, type = "III")
 ls10_M2 <- lsmeans(m10_M2, "group_early")
 contrast(ls10_M2, method = "pairwise", adjust ="tukey")
 plot(ls10_M2, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
 
+#psychopathology sensitivity
 d$SubstanceLifetime[d$group_early == "Non-psychiatric\ncontrols"] <- 0
 d$AnxietyLifetime[d$group_early == "Non-psychiatric\ncontrols"] <- 0
 
-#psychopathology sensitivity
-summary(m10_M3 <- glm(exp ~  group_early*rel + rel*sev + BASELINEAGE*sev + race2lvl + EDUCATION + GENDERTEXT + marital2lvl  + AnxietyLifetime + SubstanceLifetime + (1:ID), family = binomial, data = d))
+summary(m10_M3 <- glm(exp ~  group_early*rel + rel*sev + scale(BASELINEAGE)*sev + race2lvl + EDUCATION + GENDERTEXT + marital2lvl  + AnxietyLifetime + SubstanceLifetime + (1:ID), family = binomial, data = d))
 car::Anova(m10_M3, type = "III")
 ls10_M3 <- lsmeans(m10_M3, "group_early")
 contrast(ls10_M3, method = "pairwise", adjust ="tukey")
@@ -447,7 +449,7 @@ ggplot(adf, aes(x = AGEATFIRSTATTEMPT, y = numEnvExposuresSB>0, color = numEnvEx
 
 # environmental only
 
-summary(m_env <- glm(numEnvExposuresSB>0 ~  group_early + BASELINEAGE + race2lvl + EDUCATION + GENDERTEXT + marital2lvl, family = binomial, data = df))
+summary(m_env <- glm(numEnvExposuresSB>0 ~  group_early + scale(BASELINEAGE) + race2lvl + EDUCATION + GENDERTEXT + marital2lvl, family = binomial, data = df))
 plot_model(m_env)
 
 # # do not worry about this interaction plot -- just did it to rule out familial clustering once and for all
@@ -554,7 +556,7 @@ dblood = melt(df, na.rm = FALSE, measure.vars = c("num1stExposuresSC","num1stExp
 dblood$group_early <- relevel(dblood$group_early, ref = "Non-suicidal\ndepressed")
 
 #resetting group order
-#dblood$group_early <- factor(dblood$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
+dblood$group_early <- factor(dblood$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
 
 # discard the stupid variables
 
@@ -598,16 +600,25 @@ multcomp::cld(ls10blood, sort = FALSE)
 plot(ls10blood, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
 
 #STARGAZER COMPARING FINAL MODELS AND SENSITIVITY ANALYSES
-stargazer(m10blood, type="html", out="trans_blood.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
-stargazer(m10_M1,m10_M2,m10_M3, type="html", out="trans_sensitivity.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
-# dep.var.labels=c("Exposures"), covariate.labels=c("Non-psychiatric Controls","Ideators","Early-onset Attempters","Late-onset Attempters", 
-#                                          "Relationship: 2nd Degree Relative", "Relationship: environment", 
-#                                          "Suicide Severity (Completion)", "Age", "Education", "Race", 
-#                                          "Depressed*2nd", "Ideator*2nd", "EoAttempter*2nd", "LoAttempter*2nd",
-#                                          "Depressed*Environment", "Ideator*Environment", "EoAttempter*Environment", 
-#                                          "LoAttempter*Environment", "2nd*Suicide Severity", "Environment*Suicide Severity",
-#                                          "Suicide Severity*Age"))
 
+# #same as below, unlabeled for certainty
+# stargazer(m10blood, type="html", out="trans_blood.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
+# stargazer(m10_M1,m10_M2,m10_M3, type="html", out="trans_sensitivity.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001))
+
+#labeled for paper
+stargazer(m10blood, type="html", out="trans_blood.labeled.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
+          dep.var.labels=c("Exposures in Relatives"), covariate.labels=c("Depressed Controls","Ideators","Early-onset Attempters","Late-onset Attempters",
+                                                                         "Severity (Suicide)", "Age", "Severity*Age"))
+
+stargazer(m10_M1,m10_M2,m10_M3, type="html", out="trans_sensitivity.labeled.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
+          dep.var.labels=c("Exposures"), covariate.labels=c("Depressed Controls","Ideators","Early-onset Attempters","Late-onset Attempters",
+                                                            "Relationship: 1st Degree Relative", "Relationship: 1st Degree Relative",
+                                                            "Severity (Suicide)", "Age", "Race", "Education", "Sex", "Marital Status",
+                                                            "Anxiety Disorder", "Substance use disorder", "Depressed*1st",
+                                                            "Ideator*1st", "EoAttempter*1st", "LoAttempter*1st",
+                                                            "Depressed*2nd", "Ideator*2nd", "EoAttempter*2nd",
+                                                            "LoAttempter*2nd", "1st*Suicide Severity", "2nd*Suicide Severity",
+                                                            "Severity*Age"))
 
 # summary(m11blood <- glm(exp ~  group_early*sev + BASELINEAGE +  EDUCATION  + race2lvl + (1:ID), family = binomial, data = dblood))
 # car::Anova(m11blood, type = "III")
