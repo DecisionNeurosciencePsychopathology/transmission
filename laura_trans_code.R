@@ -8,7 +8,7 @@
 #                    "stargazer", "compareGroups", "multcompView","RColorBrewer","VIM","fifer"))
 # 
 
-library(fifer)
+#library(fifer)
 library(sjPlot)
 library(RColorBrewer)
 library(multcompView)
@@ -75,13 +75,6 @@ df <- df[df$ID!='207224'& df$ID!='216806' & df$ID!='217142' & df$ID!='217988' & 
 # 
 # df <- read_delim("FAMHX_DEMOG_COUNTS_MERGED_10.4.17.csv",
 #                  "\t", escape_double = FALSE, trim_ws = TRUE)
-
-
-
-
-
-
-
 
 # load("trans.Rda")
 # library(VIM)
@@ -385,7 +378,7 @@ ls10_M1 <- lsmeans(m10_M1, "group_early")
 contrast(ls10_M1, method = "pairwise", adjust ="tukey")
 plot(ls10_M1, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
  
-# # AD: a nice new way to visualize model coefficients
+# # AD: a nice new way to visualize model coefficients- Whisker Plot
 # library(sjPlot)
 # plot_model(m10_M1, show.p = TRUE, show.values = TRUE)
 # 
@@ -942,6 +935,14 @@ tc2 <- createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "A
                    show.p.mul = TRUE, show.ratio = TRUE)
 export2html(tc2, "Table1.kati2.html")
 
+# Table with personality
+chars <- df_neo[,c(133:137)]
+describe.by(chars,group = df$group_early_no_break)
+c <- compareGroups(chars,df$group_early_no_break)
+tc3 <- createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1, 
+                   show.p.mul = TRUE, show.ratio = TRUE)
+export2html(tc3, "Table.Pers.html")
+
 # # MORE COMPARISONS FOR A POSSIBLE FUTURE PAPER
 # chars <- df[df$GROUP1245==5,c(19:37)]
 # # describe.by(chars,group = df$group_early_no_break)
@@ -1030,6 +1031,14 @@ summary(m1_additional_1stdeg_BIS <- glm(suicidal ~  I(num1stExposuresSB>0)*scale
 car::Anova(m1_additional_1stdeg_BIS, type = "III")
 vif(m1_additional_1stdeg_BIS)
 
+summary(m1_additional_1stdeg_SPSIICSSUB <- glm(suicidal ~  I(num1stExposuresSB>0)*scale(SPSIICSSUB) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_neo_noHealthy))
+car::Anova(m1_additional_1stdeg_SPSIICSSUB, type = "III")
+vif(m1_additional_1stdeg_SPSIICSSUB)
+
+summary(m1_additional_1stdeg_UPPSPNEGURGENCY <- glm(suicidal ~  I(num1stExposuresSB>0)*scale(UPPSPNEGURGENCY) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_neo_noHealthy))
+car::Anova(m1_additional_1stdeg_UPPSPNEGURGENCY, type = "III")
+vif(m1_additional_1stdeg_UPPSPNEGURGENCY)
+
 
 #2nd degree
 summary(m1_additional_2nddeg_demo <- glm(suicidal ~  I(num2ndExposuresSB>0) * IIP15INTAMBV + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_neo_noHealthy))
@@ -1059,6 +1068,14 @@ vif(m1_additional_2nddeg_5)
 summary(m1_additional_2nddeg_BIS <- glm(suicidal ~  I(num2ndExposuresSB>0)*scale(BIS_TOT) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_neo_noHealthy))
 car::Anova(m1_additional_2nddeg_BIS, type = "III")
 vif(m1_additional_2nddeg_BIS)
+
+summary(m1_additional_2nddeg_SPSIICSSUB <- glm(suicidal ~  I(num2ndExposuresSB>0)*scale(SPSIICSSUB) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_neo_noHealthy))
+car::Anova(m1_additional_2nddeg_SPSIICSSUB, type = "III")
+vif(m1_additional_2nddeg_SPSIICSSUB)
+
+summary(m1_additional_2nddeg_UPPSPNEGURGENCY <- glm(suicidal ~  I(num2ndExposuresSB>0)*scale(UPPSPNEGURGENCY) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_neo_noHealthy))
+car::Anova(m1_additional_2nddeg_UPPSPNEGURGENCY, type = "III")
+vif(m1_additional_2nddeg_UPPSPNEGURGENCY)
 
 
 #env
@@ -1090,6 +1107,13 @@ summary(m1_additional_Envdeg_BIS <- glm(suicidal ~  I(numEnvExposuresSB>0)*scale
 car::Anova(m1_additional_Envdeg_BIS, type = "III")
 vif(m1_additional_Envdeg_BIS)
 
+summary(m1_additional_Envdeg_SPSIICSSUB <- glm(suicidal ~  I(numEnvExposuresSB>0)*scale(SPSIICSSUB) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_neo_noHealthy))
+car::Anova(m1_additional_Envdeg_SPSIICSSUB, type = "III")
+vif(m1_additional_Envdeg_SPSIICSSUB)
+
+summary(m1_additional_Envdeg_UPPSPNEGURGENCY <- glm(suicidal ~  I(numEnvExposuresSB>0)*scale(UPPSPNEGURGENCY) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_neo_noHealthy))
+car::Anova(m1_additional_Envdeg_UPPSPNEGURGENCY, type = "III")
+vif(m1_additional_Envdeg_UPPSPNEGURGENCY)
 
 #blood
 summary(m1_additional_Reldeg_demo <- glm(suicidal ~  I(numRelExposuresSB>0) * IIP15INTAMBV + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_neo_noHealthy))
@@ -1120,12 +1144,15 @@ summary(m1_additional_Reldeg_BIS <- glm(suicidal ~  I(numRelExposuresSB>0)*scale
 car::Anova(m1_additional_Reldeg_BIS, type = "III")
 vif(m1_additional_Reldeg_BIS)
 
+summary(m1_additional_Reldeg_SPSIICSSUB <- glm(suicidal ~  I(numRelExposuresSB>0)*scale(SPSIICSSUB) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_neo_noHealthy))
+car::Anova(m1_additional_Reldeg_SPSIICSSUB, type = "III")
+vif(m1_additional_Reldeg_SPSIICSSUB)
+
+summary(m1_additional_Reldeg_UPPSPNEGURGENCY <- glm(suicidal ~  I(numRelExposuresSB>0)*scale(UPPSPNEGURGENCY) + scale(BASELINEAGE) + GENDERTEXT + scale(EDUCATION), family = binomial, data = df_neo_noHealthy))
+car::Anova(m1_additional_Reldeg_UPPSPNEGURGENCY, type = "III")
+vif(m1_additional_Reldeg_UPPSPNEGURGENCY)
 
 # models predicting risk for attempting only
-
-
-
-
 
 ls10_M1blood <- lsmeans(m10_M1blood, "group_early")
 contrast(ls10_M1blood, method = "pairwise", adjust ="tukey")
@@ -1182,3 +1209,11 @@ g1 + geom_bar(aes(fill=numEnvExposuresSB), width = 1) +
        x="Age at 1st attempt",
        fill="Environmental exposures") +
   scale_fill_manual(values=c("grey80","turquoise1", "turquoise2", "turquoise3", "turquoise4"))
+
+#trying to get basic group differences in personality
+df_neo_condensed <- df_neo[,c(1,116,130,133:137)]
+as.data.frame(df_neo_condensed)
+View(df_neo_condensed)
+names(df_neo_condensed)
+chisq.test(2,c(3:8))
+
