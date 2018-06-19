@@ -693,7 +693,7 @@ ggplot(CLD,
   ggtitle ("Occurrence of suicidal behavior among family or friends by group",
            subtitle = "Binary logistic mixed-effects model") +
   labs(caption  = paste0("\n",
-                         "Boxes indicate the LS mean log probability.\n",
+                         "Boxes indicate estimated marginal mean logit probability.\n",
                          "Error bars indicate the 95% ",
                          "confidence interval of the LS mean. \n",
                          "Means sharing a letter are ",
@@ -710,7 +710,7 @@ dev.off()
 
 #plots by rel
 CLD_rel$group_early <- factor(CLD_rel$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
-pdf(file = "rel_Figure.pdf", width = 8, height = 6)
+pdf(file = "rel_Figure.gray.pdf", width = 8, height = 6)
 pd = position_dodge(0.8)    ### How much to jitter the points on the plot
 ggplot(CLD_rel,
        aes(x     = group_early,
@@ -735,7 +735,7 @@ ggplot(CLD_rel,
   ggtitle ("Occurrence of suicidal behavior by degree of relation",
            subtitle = "Binary logistic mixed-effects model") +
   labs(caption  = paste0("\n",
-                         "Boxes indicate the LS mean log probability.\n",
+                         "Boxes indicate estimated marginal mean logit probability.\n",
                          "Error bars indicate the 95% ",
                          "confidence interval of the LS mean. \n",
                          "Means sharing a letter are ",
@@ -745,10 +745,14 @@ ggplot(CLD_rel,
   geom_text(#position = "identity",
             nudge_x = c(-0.1, -0.1, -0.1, -0.1, -0.1, 0.4, 0.4, 0.4, 0.4, 0.4, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1),
             nudge_y = c(0.1, 0.1, 0.1, 0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5),
-            color   = c("darkolivegreen3","darkolivegreen3","darkolivegreen3","darkolivegreen3","darkolivegreen3",
-                        "orange2", "orange2","orange2","orange2","orange2",
-                        "orchid3","orchid3","orchid3","orchid3","orchid3")) +
-  scale_color_manual(values = c("darkolivegreen3","orchid3","orange2"))
+            color   = c("grey80","grey80","grey80","grey80","grey80",
+                        "grey60", "grey60","grey60","grey60","grey60",
+                        "black","black","black","black","black")) +
+            # color   = c("darkolivegreen3","darkolivegreen3","darkolivegreen3","darkolivegreen3","darkolivegreen3",
+            #             "orange2", "orange2","orange2","orange2","orange2",
+            #             "orchid3","orchid3","orchid3","orchid3","orchid3")) +
+  scale_color_manual(values = c("grey80", "grey60", "black"))
+# scale_color_manual(values = c("darkolivegreen3","orchid3","orange2"))
 dev.off()
 
 
@@ -782,7 +786,7 @@ ggplot(CLD_blood,
   ggtitle ("Occurrence of suicidal behavior in family vs environment",
            subtitle = "Binary logistic mixed-effects model") +
   labs(caption  = paste0("\n",
-                         "Boxes indicate the LS mean log probability.\n",
+                         "Boxes indicate estimated marginal mean logit probability.\n",
                          "Error bars indicate the 95% ",
                          "confidence interval of the LS mean. \n",
                          "Means sharing a letter are ",
@@ -821,7 +825,7 @@ dev.off()
 #   ggtitle ("Occurrence of suicidal behavior among family or friends by group",
 #            subtitle = "Binary logistic mixed-effects model") +
 #   labs(caption  = paste0("\n",
-#                          "Boxes indicate the LS mean log probability.\n",
+#                          "Boxes indicate estimated marginal mean logit probability.\n",
 #                          "Error bars indicate the 95% ",
 #                          "confidence interval of the LS mean. \n",
 #                          "Means sharing a letter are ",
@@ -863,7 +867,7 @@ dev.off()
 #   ggtitle ("Occurrence of suicidal behavior among blood relatives by group",
 #            subtitle = "Binary logistic mixed-effects model") +
 #   labs(caption  = paste0("\n",
-#                          "Boxes indicate the LS mean log probability.\n",
+#                          "Boxes indicate estimated marginal mean logit probability.\n",
 #                          "Error bars indicate the 95% ",
 #                          "confidence interval of the LS mean. \n",
 #                          "Means sharing a letter are ",
