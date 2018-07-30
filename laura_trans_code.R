@@ -140,6 +140,11 @@ df$bloodSB<-0
 df$bloodSB[df$firstdegSB==1|df$seconddegSB==1]<-1
 df$bloodSB[is.na(df$firstdegSB)|is.na(df$seconddegSB)]<-"NA"
 
+df$envSB<-0
+df$envSB[df$numEnvExposuresSB>=1]<-1
+df$envSB[is.na(df$numEnvExposuresSB)] <- "NA"
+df$envSB
+
 df$race2lvl <- "NA"
 df$race2lvl[df$RACETEXT=="WHITE"] <- 0
 #minority are 1
@@ -378,6 +383,14 @@ ls10_M1 <- lsmeans(m10_M1, "group_early")
 contrast(ls10_M1, method = "pairwise", adjust ="tukey")
 plot(ls10_M1, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
  
+#THE GOOD MODELWITHOUT AGE 7/11/18
+summary(m10_M1_NoAge <- glm(exp ~  group_early*rel + rel*sev + (1:ID), family = binomial, data = d))
+car::Anova(m10_M1_NoAge, type = "III")
+ls10_M1 <- lsmeans(m10_M1, "group_early")
+contrast(ls10_M1_NoAge, method = "pairwise", adjust ="tukey")
+plot(ls10_M1_NoAge, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
+
+
 # # AD: a nice new way to visualize model coefficients- Whisker Plot
 # library(sjPlot)
 # plot_model(m10_M1, show.p = TRUE, show.values = TRUE)
@@ -668,13 +681,12 @@ CLD_blood$group_early <- factor(CLD_blood$group_early, levels = c("Non-psychiatr
 CLD_rel$rel <- factor(CLD_rel$rel, levels = c("ENV","2nd", "1st"))
 
 #plot main figure
-pdf(file = "Main_Figure.m10_M1.pdf", width = 8, height = 6)
+pdf(file = "PANEL_B.pdf", width = 8, height = 5)
 pd = position_dodge(0.8)    ### How much to jitter the points on the plot
-ggplot(CLD,
+p_main <- ggplot(CLD,
        aes(x     = group_early,
            y     = lsmean,
-           label = .group,
-           col = group_early)) +
+           label = .group)) +
   xlab(NULL) +
   geom_point(shape  = 15,
              size   = 4,
@@ -685,38 +697,183 @@ ggplot(CLD,
                 size  =  0.7,
                 position = pd) +
   theme_bw() +
-  theme(axis.title   = element_text(face = "bold"),
-        axis.text    = element_text(face = "bold"),
-        plot.caption = element_text(hjust = 0),
-        legend.title = element_blank()) +
   ylab("Least square log probability of exposure \nLower prevalence   <-   ->   Higher prevalence") +
-  ggtitle ("Occurrence of suicidal behavior among family or friends by group",
-           subtitle = "Binary logistic mixed-effects model") +
-  labs(caption  = paste0("\n",
-                         "Boxes indicate estimated marginal mean logit probability.\n",
-                         "Error bars indicate the 95% ",
-                         "confidence interval of the LS mean. \n",
-                         "Means sharing a letter are ",
-                         "not significantly different ",
-                         "(Tukey-adjusted comparisons)."),
-       hjust=0.5) +
+  xlab("Study groups") +
+  ggtitle ("Panel B: Exposure to suicidal behavior by group") +
   geom_text(nudge_x = c(0.1, 0.1, 0.1, -0.1, 0.1),
             nudge_y = c(0.95,  0.95, 0.9,  0.8, 0.8),
             color   = "black") +
 #scale_color_manual(values = c("grey80", "grey60", "grey45", "grey30", "grey15"))
 scale_color_manual(values = c("black", "black", "black", "black", "black"))
+p_main
+dev.off()
+p_main
+
+# #plots by rel
+# CLD_rel$group_early <- factor(CLD_rel$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
+# pdf(file = "rel_Figure.gray.pdf", width = 8, height = 6)
+# pd = position_dodge(0.8)    ### How much to jitter the points on the plot
+# ggplot(CLD_rel,
+#        aes(x     = group_early,
+#            y     = lsmean,
+#            label = .group,
+#            col = rel)) +
+#   xlab(NULL) +
+#   geom_point(shape  = 15,
+#              size   = 4,
+#              position = pd) +
+#   geom_errorbar(aes(ymin  =  asymp.LCL,
+#                     ymax  =  asymp.UCL),
+#                 width =  0.2,
+#                 size  =  0.7,
+#                 position = pd) +
+#   theme_classic() +
+#   theme(axis.title   = element_text(face = "bold"),
+#         axis.text    = element_text(face = "bold"),
+#         plot.caption = element_text(hjust = 0),
+#         legend.title= element_blank()) +
+#   ylab("Least square log probability of exposures \nLower prevalence   <-   ->   Higher prevalence") +
+#   ggtitle ("Occurrence of suicidal behavior by degree of relation",
+#            subtitle = "Binary logistic mixed-effects model") +
+#   labs(caption  = paste0("\n",
+#                          "Boxes indicate estimated marginal mean logit probability.\n",
+#                          "Error bars indicate the 95% ",
+#                          "confidence interval of the LS mean. \n",
+#                          "Means sharing a letter are ",
+#                          "not significantly different ",
+#                          "(Tukey-adjusted comparisons)."),
+#        hjust=0.5) +
+#   geom_text(#position = "identity",
+#             nudge_x = c(-0.1, -0.1, -0.1, -0.1, -0.1, 0.4, 0.4, 0.4, 0.4, 0.4, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1),
+#             nudge_y = c(0.1, 0.1, 0.1, 0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5),
+#             color   = c("grey80","grey80","grey80","grey80","grey80",
+#                         "grey60", "grey60","grey60","grey60","grey60",
+#                         "black","black","black","black","black")) +
+#             # color   = c("darkolivegreen3","darkolivegreen3","darkolivegreen3","darkolivegreen3","darkolivegreen3",
+#             #             "orange2", "orange2","orange2","orange2","orange2",
+#             #             "orchid3","orchid3","orchid3","orchid3","orchid3")) +
+#   scale_color_manual(values = c("grey80", "grey60", "black"))
+# # scale_color_manual(values = c("darkolivegreen3","orchid3","orange2"))
+# dev.off()
+
+CLD_rel
+# NEW rel plot
+CLD_rel$group_early <- factor(CLD_rel$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
+CLD_rel$intercept[CLD_rel$group_early == "Non-psychiatric\ncontrols"] <- min(CLD_rel$lsmean[CLD_rel$group_early == "Non-psychiatric\ncontrols"])
+CLD_rel$intercept[CLD_rel$group_early == "Non-suicidal\ndepressed"] <- min(CLD_rel$lsmean[CLD_rel$group_early == "Non-suicidal\ndepressed"])
+CLD_rel$intercept[CLD_rel$group_early == "Suicide\nideators"] <- min(CLD_rel$lsmean[CLD_rel$group_early == "Suicide\nideators"])
+CLD_rel$intercept[CLD_rel$group_early ==  "Early-onset\nattempters"] <- min(CLD_rel$lsmean[CLD_rel$group_early ==  "Early-onset\nattempters"])
+CLD_rel$intercept[CLD_rel$group_early == "Late-onset\nattempters"] <- min(CLD_rel$lsmean[CLD_rel$group_early == "Late-onset\nattempters"])
+
+pdf(file = "PANEL_C.pdf", width = 8, height = 4)
+pd = position_dodge(0.8)    ### How much to jitter the points on the plot
+p_rel <- ggplot(CLD_rel,
+       aes(x     = rel,
+           y     = lsmean,
+           group = group_early)) +
+        theme_bw() +
+  geom_point(shape  = 15,
+             size   = 4,
+             position = pd,
+             color = c('black', 'grey60','grey60','black', 'grey60','grey60','black', 'grey60','grey60','black', 'grey60','grey60','black', 'grey60','grey60')) +
+#  geom_line()  +
+#  geom_smooth(method = "lm", se = FALSE, color = 'grey80') +
+  facet_grid(. ~ group_early) +
+#  geom_hline(aes(yintercept = intercept), CLD_rel, color = 'grey80', size = 1.5, linetype="dashed") +
+  ggtitle ("Panel C: Exposure to suicidal behavior by group and degree of relation") +
+  xlab("Degree of relation") +
+  ylab("Least square log probability of exposures \nLower prevalence   <-   ->   Higher prevalence")
+  
+
+p_rel
+dev.off()
+p_rel
+
+## NEW rel plots: mock data
+# No evidence for familial transmission
+CLD_mock <- cbind(c(1.2, 1, 1.1, 3, 3.1, 3.15), c('ENV', '2nd', '1st', 'ENV', '2nd', '1st'), c('hypothetical\ncontrols','hypothetical\ncontrols','hypothetical\ncontrols','hypothetical\nearly-onset attempters','hypothetical\nearly-onset attempters','hypothetical\nearly-onset attempters'))
+colnames(CLD_mock) <- c('lsmean', 'rel', 'group')
+CLD_mock <- data.frame(CLD_mock)
+CLD_mock$rel <- factor(CLD_mock$rel, levels = c('ENV', '2nd', '1st'))
+CLD_mock$lsmean <- as.numeric(as.character(CLD_mock$lsmean))
+CLD_mock$intercept[CLD_mock$group == 'hypothetical\ncontrols'] <- min(CLD_mock$lsmean[CLD_mock$group == "hypothetical\ncontrols"])
+CLD_mock$intercept[CLD_mock$group == 'hypothetical\nearly-onset attempters'] <- min(CLD_mock$lsmean[CLD_mock$group == 'hypothetical\nearly-onset attempters'])
+CLD_mock$intercept <- as.numeric(CLD_mock$intercept)
+
+
+pd = position_dodge(0.8)    ### How much to jitter the points on the plot
+p_mock <- ggplot(CLD_mock,
+                 aes(x     = rel,
+                     y     = lsmean,
+                     group = group)) +
+  geom_point(shape  = 15,
+             size   = 4,
+             position = pd,
+             color = c('black', 'grey60','grey60','black', 'grey60','grey60')) +
+#  geom_line()  +
+#  geom_smooth(method = "lm", se = FALSE, color = 'grey80') +
+  facet_grid(. ~ group) +
+  theme(axis.ticks.y=element_blank(), axis.text.y=element_blank()) +
+  geom_hline(aes(yintercept = intercept), CLD_mock, color = 'grey80', size = 1, linetype="dashed") +
+  ylim(0,5) +
+  ggtitle ("Panel A: Illustrative diagram\nEvidence for social but not familial transmission") +
+  xlab("Degree of relation") +
+  ylab("Probability of exposures")
+
+
+# evidence for familial transmission
+CLD_mock2 <- cbind(c(1.2, 1, 1.1, 3, 3.5, 4.5), c('ENV', '2nd', '1st', 'ENV', '2nd', '1st'), c('hypothetical\ncontrols','hypothetical\ncontrols','hypothetical\ncontrols','hypothetical\nearly-onset attempters','hypothetical\nearly-onset attempters','hypothetical\nearly-onset attempters'))
+colnames(CLD_mock2) <- c('lsmean', 'rel', 'group')
+CLD_mock2 <- data.frame(CLD_mock2)
+CLD_mock2$rel <- factor(CLD_mock2$rel, levels = c('ENV', '2nd', '1st'))
+CLD_mock2$lsmean <- as.numeric(as.character(CLD_mock2$lsmean))
+CLD_mock2$intercept[CLD_mock2$group == 'hypothetical\ncontrols'] <- min(CLD_mock2$lsmean[CLD_mock2$group == "hypothetical\ncontrols"])
+CLD_mock2$intercept[CLD_mock2$group == 'hypothetical\nearly-onset attempters'] <- min(CLD_mock2$lsmean[CLD_mock2$group == 'hypothetical\nearly-onset attempters'])
+CLD_mock2$intercept <- as.numeric(CLD_mock2$intercept)
+
+pd = position_dodge(0.8)    ### How much to jitter the points on the plot
+p_mock2 <- ggplot(CLD_mock2,
+          aes(x     = rel,
+              y     = lsmean,
+           group = group)) +
+      geom_point(shape  = 15,
+             size   = 4,
+             position = pd,
+             color = c('black', 'grey60','grey60','black', 'grey60','grey60')) +
+#  geom_line()  +
+#  geom_smooth(method = "lm", se = FALSE, color = 'grey80') +
+  facet_grid(. ~ group) +
+  theme(axis.ticks.y=element_blank(), axis.text.y=element_blank(),axis.title.y=element_blank()) +
+  geom_hline(aes(yintercept = intercept), CLD_mock2, color = 'grey80', size = 1, linetype="dashed") +
+  ylim(0,5) +
+  ggtitle ("\nEvidence for social and familial transmission") +
+  xlab("Degree of relation")
+  
+library(grid)
+library(gridExtra)
+pdf(file = "PANEL_A.pdf", width = 8.5, height = 3.5)
+grid.arrange(p_mock, p_mock2, ncol = 2)
+p_mock_combined <- grid.arrange(p_mock, p_mock2, ncol = 2)
 dev.off()
 
+# pdf(file = "combined_figure.pdf", width = 8, height = 6)
+# p_mock_combined
+# 
+# grid.arrange(p_main, p_mock_combined, p_rel, ncol = 1)
+# dev.off()
 
-#plots by rel
-CLD_rel$group_early <- factor(CLD_rel$group_early, levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators", "Early-onset\nattempters","Late-onset\nattempters"))
-pdf(file = "rel_Figure.gray.pdf", width = 8, height = 6)
+#plot blood vs env
+CLD_blood$group_early <- factor(CLD_blood$group_early, 
+                                levels = c("Non-psychiatric\ncontrols","Non-suicidal\ndepressed", "Suicide\nideators",
+                                           "Early-onset\nattempters","Late-onset\nattempters"))
+
+pdf(file = "blood_Figure.pdf", width = 8, height = 6)
 pd = position_dodge(0.8)    ### How much to jitter the points on the plot
-ggplot(CLD_rel,
+ggplot(CLD_blood,
        aes(x     = group_early,
            y     = lsmean,
            label = .group,
-           col = rel)) +
+           col = blood)) +
   xlab(NULL) +
   geom_point(shape  = 15,
              size   = 4,
@@ -732,7 +889,7 @@ ggplot(CLD_rel,
         plot.caption = element_text(hjust = 0),
         legend.title= element_blank()) +
   ylab("Least square log probability of exposures \nLower prevalence   <-   ->   Higher prevalence") +
-  ggtitle ("Occurrence of suicidal behavior by degree of relation",
+  ggtitle ("Occurrence of suicidal behavior in family vs nonrelatives",
            subtitle = "Binary logistic mixed-effects model") +
   labs(caption  = paste0("\n",
                          "Boxes indicate estimated marginal mean logit probability.\n",
@@ -743,17 +900,13 @@ ggplot(CLD_rel,
                          "(Tukey-adjusted comparisons)."),
        hjust=0.5) +
   geom_text(#position = "identity",
-            nudge_x = c(-0.1, -0.1, -0.1, -0.1, -0.1, 0.4, 0.4, 0.4, 0.4, 0.4, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1),
-            nudge_y = c(0.1, 0.1, 0.1, 0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5),
-            color   = c("grey80","grey80","grey80","grey80","grey80",
-                        "grey60", "grey60","grey60","grey60","grey60",
-                        "black","black","black","black","black")) +
-            # color   = c("darkolivegreen3","darkolivegreen3","darkolivegreen3","darkolivegreen3","darkolivegreen3",
-            #             "orange2", "orange2","orange2","orange2","orange2",
-            #             "orchid3","orchid3","orchid3","orchid3","orchid3")) +
-  scale_color_manual(values = c("grey80", "grey60", "black"))
-# scale_color_manual(values = c("darkolivegreen3","orchid3","orange2"))
+    nudge_x = c(-0.07, -0.07, -0.07, -0.07, -0.07, 0.3, 0.3, 0.3, 0.3, 0.3),
+    nudge_y = c(0.1, 0.1, 0.1, 0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5),
+    color   = c("gray50","gray50","gray50","gray50","gray50",
+                "violetred4", "violetred4", "violetred4", "violetred4", "violetred4")) +
+  scale_color_manual(values = c("gray50","violetred3"))
 dev.off()
+
 
 
 #plot blood vs env
@@ -783,7 +936,7 @@ ggplot(CLD_blood,
         plot.caption = element_text(hjust = 0),
         legend.title= element_blank()) +
   ylab("Least square log probability of exposures \nLower prevalence   <-   ->   Higher prevalence") +
-  ggtitle ("Occurrence of suicidal behavior in family vs environment",
+  ggtitle ("Occurrence of suicidal behavior in family vs nonrelatives",
            subtitle = "Binary logistic mixed-effects model") +
   labs(caption  = paste0("\n",
                          "Boxes indicate estimated marginal mean logit probability.\n",
@@ -938,6 +1091,25 @@ c <- compareGroups(chars,df$group_early_no_break)
 tc2 <- createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1, 
                    show.p.mul = TRUE, show.ratio = TRUE)
 export2html(tc2, "Table1.kati2.html")
+
+names(df)
+
+# Table 1 with SB only
+chars <- df[,c(110,112,114,12)]
+# describe.by(chars,group = df$group_early_no_break)
+c <- compareGroups(chars,df$group_early_no_break)
+tc4 <- createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1, 
+                   show.p.mul = TRUE, show.ratio = TRUE)
+export2html(tc4, "SB_rel_table.html")
+
+
+# Table 1 with SB percents only
+chars <- df[,c(119,118,120,133)]
+# describe.by(chars,group = df$group_early_no_break)
+c <- compareGroups(chars,df$group_early_no_break)
+tc4 <- createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1, 
+                   show.p.mul = TRUE, show.ratio = TRUE)
+export2html(tc4, "SB_%_table.html")
 
 # Table with personality
 chars <- df_neo[,c(133:137)]
