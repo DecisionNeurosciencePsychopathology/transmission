@@ -1085,7 +1085,7 @@ p
 #TABLES
 names(df)
 # Table 1 with the variables Kati suggested
-chars <- df[,c(2,7,121,9,126,18,40,42,25,130,13,14,11,17,119,120,122,123,124,125)]
+chars <- df[,c(127,2,7,121,9,126,18,40,42,25,130,13,14,11,17,119,120,122,123,124,125)]
 # describe.by(chars,group = df$group_early_no_break)
 c <- compareGroups(chars,df$group_early_no_break)
 tc2 <- createTable(c,hide = c(GENDERTEXT = "MALE", list(RACETEXT = c("WHITE", "ASIAN PACIFIC"))), hide.no = 0, digits = 1, 
