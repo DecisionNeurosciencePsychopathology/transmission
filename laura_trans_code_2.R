@@ -90,10 +90,7 @@ library(VIM)
 df_aggr = aggr(df, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(df), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
 
 #missing amongst attempters only
-df_onlyAtt_aggr = aggr(df_onlyAtt, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(df), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
-
-#missing no healthy
-df_noHealthy_aggr = aggr(df_noHealthy, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(df), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
+df_aggr = aggr(df_onlyAtt, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(df), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
 
 
 # designate factors
@@ -1337,14 +1334,10 @@ ls10_M1blood <- lsmeans(m10_M1blood, "group_early")
 contrast(ls10_M1blood, method = "pairwise", adjust ="tukey")
 plot(ls10_M1blood, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal behavior", xlab = "Group")
 
-##df with healthy only
-df_noHealthy <-df[df$GROUP1245 != '1',]
-View(df_noHealthy)
 
 ##correlations and plot that Kati wanted to see
 df_onlyAtt <- df[df$GROUP1245 == '5',]
-
-
+View(df_onlyAtt)
 
 chars3 <- df_onlyAtt[,c(11,12,14,108,114)]
 chars3$numRelExposuresSB <- as.factor(chars3$numRelExposuresSB)
@@ -1400,7 +1393,3 @@ as.data.frame(df_neo_condensed)
 names(df_neo_condensed)
 chisq.test(2,c(3:8))
 
-#plot for age cut-off
-ggplot(d, aes(AGEATFIRSTATTEMPT, as.numeric(exp), color = rel, lty = sev)) + geom_smooth(method = 'loess', span = 3, se = FALSE) +
-labs(x="Age at 1st attempt", y = "Probability of exposure to suicidal behavior")
-     
