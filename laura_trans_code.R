@@ -96,6 +96,7 @@ df_onlyAtt_aggr = aggr(df_onlyAtt, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, la
 df_noHealthy_aggr = aggr(df_noHealthy, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(df), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
 
 
+
 # designate factors
 
 df$GROUP1245 <- as.factor(df$GROUP1245)
@@ -1339,7 +1340,6 @@ plot(ls10_M1blood, type ~ d$group_early, horiz=F, ylab = "exposure to suicidal b
 
 ##df with healthy only
 df_noHealthy <-df[df$GROUP1245 != '1',]
-View(df_noHealthy)
 
 ##correlations and plot that Kati wanted to see
 df_onlyAtt <- df[df$GROUP1245 == '5',]
@@ -1403,4 +1403,15 @@ chisq.test(2,c(3:8))
 #plot for age cut-off
 ggplot(d, aes(AGEATFIRSTATTEMPT, as.numeric(exp), color = rel, lty = sev)) + geom_smooth(method = 'loess', span = 3, se = FALSE) +
 labs(x="Age at 1st attempt", y = "Probability of exposure to suicidal behavior")
-     
+
+#checking n for individuals with first attempt in 40s and 50s
+# histogram(df_onlyAtt$AGEATFIRSTATTEMPT, type= "count", breaks=c(1:95))
+# histogram(df_onlyAtt$AGEATFIRSTATTEMPT, type= "percent", breaks=c(1:95))
+# ageCounts <- table(df_onlyAtt$AGEATFIRSTATTEMPT)
+# barplot(ageCounts, main="AAFA Distribution", 
+#         xlab="AAFA")
+# minor.tick(nx = 10, 
+#            ny = 2, 
+#            tick.ratio=1)
+
+midlifeAttempt<-table(df_onlyAtt$AGEATFIRSTATTEMPT>40 & df_onlyAtt$AGEATFIRSTATTEMPT<60)
